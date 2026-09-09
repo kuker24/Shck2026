@@ -19,16 +19,16 @@ export const FreeFloatCard: React.FC<FreeFloatCardProps> = ({ data, className = 
   const isCompliant = hasData && percent >= 7.5;
 
   return (
-    <section aria-label={COPY.free_float_title} className={`card-interactive border border-slash-graphite rounded-lg p-5 sm:p-6 flex flex-col ${className}`}>
+    <section aria-label={COPY.free_float_title} className={`border border-slash-graphite rounded-lg p-5 sm:p-6 flex flex-col ${className}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-5">
         <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">{COPY.free_float_title}</h3>
         {hasData ? (
           <span
-            className={`font-sans text-[11px] font-medium inline-flex items-center gap-1.5 ${
+            className={`font-mono text-[11px] font-medium inline-flex items-center gap-1 ${
               isCompliant ? 'text-status-success' : 'text-status-error'
             }`}
           >
-            <span aria-hidden="true">{isCompliant ? '●' : '○'}</span>
+            <span aria-hidden="true" className="font-semibold">{isCompliant ? '✓' : '!'}</span>
             {isCompliant ? COPY.free_float_compliant : COPY.free_float_noncompliant}
           </span>
         ) : (
@@ -58,10 +58,10 @@ export const FreeFloatCard: React.FC<FreeFloatCardProps> = ({ data, className = 
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label={`Saham publik ${percent.toFixed(1)} persen`}
-            className="w-full bg-slash-graphite h-2.5 rounded-full overflow-hidden mb-2.5 flex"
+            className="w-full bg-slash-graphite h-2 rounded-xs overflow-hidden mb-2.5 flex"
           >
             <div
-              className="gilded-gradient h-full rounded-l-full"
+              className="gilded-gradient h-full rounded-xs"
               style={{ width: `${Math.min(Math.max(percent, 0), 100)}%` }}
             />
           </div>
@@ -74,12 +74,12 @@ export const FreeFloatCard: React.FC<FreeFloatCardProps> = ({ data, className = 
       ) : (
         <div className="mb-4 space-y-2" aria-hidden="true">
           <div className="skeleton h-2.5 w-full" />
-          <p className="text-[11px] text-slash-mist font-sans">Menunggu data kepemilikan publik.</p>
+          <p className="text-sm text-slash-mist font-serif leading-relaxed">Menunggu data kepemilikan publik.</p>
         </div>
       )}
 
       {data.note && (
-        <p className="text-xs text-slash-mist leading-relaxed mt-auto">{data.note}</p>
+        <p className="text-sm text-slash-mist font-serif leading-relaxed mt-auto">{data.note}</p>
       )}
     </section>
   );

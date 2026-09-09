@@ -115,9 +115,10 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
 
   const renderBrokerTable = (type: 'buyers' | 'sellers', data: BrokerRow[], maxVal: number) => {
     const isBuyers = type === 'buyers';
+    const showFullColumns = viewMode !== 'split';
 
     return (
-      <div className="card-interactive border border-slash-graphite rounded-lg flex flex-col overflow-hidden">
+      <div className="border border-slash-graphite rounded-lg flex flex-col overflow-hidden">
         <div className="px-4 py-3.5 border-b border-slash-graphite flex items-baseline justify-between gap-2">
           <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">
             {isBuyers ? COPY.buyers_title : COPY.sellers_title}
@@ -129,22 +130,26 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
 
         <div className="overflow-x-auto">
           <table
-            className="w-full text-left border-collapse text-xs"
+            className="w-full text-left border-collapse text-xs table-fixed"
             aria-label={isBuyers ? 'Pembeli bersih' : 'Penjual bersih'}
           >
             <thead>
               <tr className="border-b border-slash-graphite text-slash-fog font-sans text-[11px]">
-                <th scope="col" className="py-2.5 px-3.5 w-10 text-center">No</th>
-                <th scope="col" className="py-2.5 px-3.5">Sekuritas</th>
-                <th scope="col" className="py-2.5 px-3.5 text-right hidden sm:table-cell">Beli</th>
-                <th scope="col" className="py-2.5 px-3.5 text-right hidden sm:table-cell">Jual</th>
-                <th scope="col" className="py-2.5 px-3.5 text-right">Net</th>
+                <th scope="col" className="py-2.5 px-2 sm:px-3.5 w-9 sm:w-10 text-center">No</th>
+                <th scope="col" className="py-2.5 px-2 sm:px-3.5">Sekuritas</th>
+                {showFullColumns && (
+                  <>
+                    <th scope="col" className="py-2.5 px-2 sm:px-3 text-right w-24 sm:w-28">Beli</th>
+                    <th scope="col" className="py-2.5 px-2 sm:px-3 text-right w-24 sm:w-28">Jual</th>
+                  </>
+                )}
+                <th scope="col" className="py-2.5 px-2 sm:px-3.5 text-right w-28 sm:w-36">Net</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slash-graphite/50 font-mono-numbers">
               {data.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-10 px-4 text-center font-sans">
+                  <td colSpan={showFullColumns ? 5 : 3} className="py-10 px-4 text-center font-sans">
                     <p className="text-sm text-slash-paper mb-1">Belum ada catatan transaksi</p>
                     <p className="text-xs text-slash-fog">Coba kode lain atau contoh BBCA.</p>
                   </td>
@@ -164,16 +169,14 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                   return (
                     <React.Fragment key={`${type}-${rowKey}`}>
                       <tr className="row-hover">
-                        <td className="py-3 px-3.5 text-center text-slash-steel font-mono text-[11px] align-top">
+                        <td className="py-3 px-2 sm:px-3.5 text-center text-slash-steel font-mono text-[11px] align-top">
                           {row.rank}
                         </td>
-                        <td className="py-3 px-3.5">
-                          <div className="flex items-center gap-2">
+                        <td className="py-3 px-2 sm:px-3.5 min-w-0 align-top">
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                             <span
-                              className={`font-sans text-[10px] font-medium px-1.5 py-0.5 rounded-sm border shrink-0 ${
-                                isForeign
-                                  ? 'text-slash-copper border-slash-copper/30 bg-slash-copper/10'
-                                  : 'text-slash-mist border-slash-graphite bg-slash-carbon'
+                              className={`font-sans text-[10px] sm:text-[11px] shrink-0 ${
+                                isForeign ? 'text-slash-copper' : 'text-slash-fog'
                               }`}
                               title={isForeign ? 'Sekuritas asing' : 'Sekuritas domestik'}
                             >
@@ -184,13 +187,13 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                               onClick={() => setActiveHoverBroker(meta)}
                               aria-haspopup="dialog"
                               aria-label={`Profil ${row.broker_code} ${row.broker_name}`}
-                              className="pressable font-mono font-semibold px-2 py-1 min-h-[32px] rounded-sm bg-slash-carbon text-slash-paper border border-slash-graphite text-[11px] cursor-pointer hover:border-slash-slate transition-colors duration-150"
+                              className="pressable font-mono font-semibold px-1.5 sm:px-2 py-0.5 sm:py-1 min-h-[26px] sm:min-h-[28px] rounded-xs bg-slash-carbon text-slash-paper border border-slash-graphite text-[11px] cursor-pointer hover:border-slash-slate transition-colors duration-150 shrink-0"
                               title={meta.name}
                             >
                               {row.broker_code}
                             </button>
                             <span
-                              className="font-sans text-[13px] text-slash-bone truncate max-w-[110px] sm:max-w-[160px]"
+                              className="font-sans text-xs sm:text-[13px] text-slash-bone truncate min-w-0 flex-1"
                               title={row.broker_name}
                             >
                               {row.broker_name}
@@ -200,13 +203,13 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                               onClick={() => setExpandedCode(isExpanded ? null : `${type}-${rowKey}`)}
                               aria-expanded={isExpanded}
                               aria-label={isExpanded ? `Sembunyikan rincian ${row.broker_code}` : `Tampilkan rincian ${row.broker_code}`}
-                              className="sm:hidden pressable ml-auto text-slash-mist hover:text-slash-paper font-mono text-xs min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-sm cursor-pointer shrink-0"
+                              className={`${showFullColumns ? 'sm:hidden' : ''} pressable ml-auto text-slash-mist hover:text-slash-paper font-mono text-xs w-6 h-6 inline-flex items-center justify-center rounded-xs cursor-pointer shrink-0`}
                             >
                               <span aria-hidden="true">{isExpanded ? '−' : '+'}</span>
                             </button>
                           </div>
                           {isExpanded && (
-                            <dl className="sm:hidden mt-2.5 space-y-1.5 text-[11px] font-mono-numbers border-t border-slash-graphite/50 pt-2.5">
+                            <dl className={`${showFullColumns ? 'sm:hidden' : ''} mt-2.5 space-y-1.5 text-[11px] font-mono-numbers border-t border-slash-graphite/50 pt-2.5`}>
                               <div className="flex justify-between">
                                 <dt className="text-slash-fog font-sans">{COPY.buy_label}</dt>
                                 <dd className="text-slash-mist">{formatIDR(row.buy_value, useCompact)}</dd>
@@ -218,23 +221,27 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                             </dl>
                           )}
                         </td>
-                        <td className="py-3 px-3.5 text-right text-slash-mist hidden sm:table-cell align-top whitespace-nowrap">
-                          {formatIDR(row.buy_value, useCompact)}
-                        </td>
-                        <td className="py-3 px-3.5 text-right text-slash-mist hidden sm:table-cell align-top whitespace-nowrap">
-                          {formatIDR(row.sell_value, useCompact)}
-                        </td>
-                        <td className="py-3 px-3.5 text-right relative align-top whitespace-nowrap">
+                        {showFullColumns && (
+                          <>
+                            <td className="py-3 px-2 sm:px-3 text-right text-slash-mist align-top whitespace-nowrap">
+                              {formatIDR(row.buy_value, useCompact)}
+                            </td>
+                            <td className="py-3 px-2 sm:px-3 text-right text-slash-mist align-top whitespace-nowrap">
+                              {formatIDR(row.sell_value, useCompact)}
+                            </td>
+                          </>
+                        )}
+                        <td className="py-3 px-2 sm:px-3.5 text-right relative align-top whitespace-nowrap">
                           <div
-                            className={`absolute bottom-1.5 right-3.5 h-1 rounded-full ${
+                            className={`absolute bottom-1.5 right-2 sm:right-3.5 h-1 rounded-xs ${
                               isPositive ? 'bg-trade-buy/50' : 'bg-trade-sell/50'
                             }`}
-                            style={{ width: `${concentrationPercent}%`, maxWidth: '90px' }}
+                            style={{ width: `${concentrationPercent}%`, maxWidth: '75px' }}
                             aria-hidden="true"
                             title={`${concentrationPercent}% dari nilai terbesar`}
                           />
                           <span
-                            className={`font-mono text-xs sm:text-sm font-medium ${
+                            className={`font-mono text-xs sm:text-sm font-medium tabular-nums ${
                               isPositive ? 'text-trade-buy' : 'text-trade-sell'
                             }`}
                           >
@@ -256,7 +263,7 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
 
   return (
     <section aria-label="Aliran broker" className={`space-y-5 ${className}`}>
-      <p className="text-[11px] text-slash-mist font-sans">{COPY.broker_section_hint}</p>
+      <p className="text-sm text-slash-mist font-serif leading-relaxed">{COPY.broker_section_hint}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1" role="tablist" aria-label="Tampilan tabel">
           {tabBtn('split', 'Beli & jual')}
@@ -313,7 +320,7 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
       {viewMode === 'sellers' && renderBrokerTable('sellers', topSellers, maxNetSeller)}
 
       {viewMode === 'matrix' && (
-        <div className="card-interactive border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-5">
+        <div className="border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-5">
           <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">Konsentrasi</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
@@ -324,8 +331,8 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                     <span className="text-slash-fog">3 besar / daftar</span>
                     <span className="text-slash-paper">{cr3BuyersPercent}%</span>
                   </div>
-                  <div className="w-full bg-slash-carbon h-2 rounded-full overflow-hidden">
-                    <div className="bg-trade-buy h-full rounded-full" style={{ width: `${cr3BuyersPercent}%` }} />
+                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
+                    <div className="bg-trade-buy h-full rounded-xs" style={{ width: `${cr3BuyersPercent}%` }} />
                   </div>
                 </div>
                 <div>
@@ -333,8 +340,8 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                     <span className="text-slash-fog">5 besar / daftar</span>
                     <span className="text-slash-paper">{cr5BuyersPercent}%</span>
                   </div>
-                  <div className="w-full bg-slash-carbon h-2 rounded-full overflow-hidden">
-                    <div className="bg-trade-buy/70 h-full rounded-full" style={{ width: `${cr5BuyersPercent}%` }} />
+                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
+                    <div className="bg-trade-buy/70 h-full rounded-xs" style={{ width: `${cr5BuyersPercent}%` }} />
                   </div>
                 </div>
               </div>
@@ -347,8 +354,8 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                     <span className="text-slash-fog">3 besar / daftar</span>
                     <span className="text-slash-paper">{cr3SellersPercent}%</span>
                   </div>
-                  <div className="w-full bg-slash-carbon h-2 rounded-full overflow-hidden">
-                    <div className="bg-trade-sell h-full rounded-full" style={{ width: `${cr3SellersPercent}%` }} />
+                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
+                    <div className="bg-trade-sell h-full rounded-xs" style={{ width: `${cr3SellersPercent}%` }} />
                   </div>
                 </div>
                 <div>
@@ -356,8 +363,8 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                     <span className="text-slash-fog">5 besar / daftar</span>
                     <span className="text-slash-paper">{cr5SellersPercent}%</span>
                   </div>
-                  <div className="w-full bg-slash-carbon h-2 rounded-full overflow-hidden">
-                    <div className="bg-trade-sell/70 h-full rounded-full" style={{ width: `${cr5SellersPercent}%` }} />
+                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
+                    <div className="bg-trade-sell/70 h-full rounded-xs" style={{ width: `${cr5SellersPercent}%` }} />
                   </div>
                 </div>
               </div>
@@ -372,13 +379,19 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label={`Profil sekuritas ${activeHoverBroker.code}`}
+          tabIndex={-1}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 overlay-dim"
           onClick={() => setActiveHoverBroker(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setActiveHoverBroker(null);
+          }}
         >
           <div
             ref={modalRef}
+            role="document"
             className="modal-panel w-full max-w-md bg-slash-onyx border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-4"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>

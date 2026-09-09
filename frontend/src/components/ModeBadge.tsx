@@ -31,12 +31,6 @@ const getModeHint = (m: InvestigationMode): string => {
   }
 };
 
-const dotClass = (m: InvestigationMode) => {
-  if (m === 'live') return 'bg-status-success';
-  if (m === 'cache') return 'bg-slash-copper';
-  return 'bg-slash-steel';
-};
-
 export const ModeBadge: React.FC<ModeBadgeProps> = ({
   mode,
   creditEstimate,
@@ -47,7 +41,7 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({
     <div className="flex flex-wrap items-center gap-2">
       {interactive && onModeChange ? (
         <div
-          className="inline-flex rounded-full bg-slash-carbon p-0.5 border border-slash-graphite text-xs"
+          className="inline-flex items-center gap-2 text-xs"
           role="radiogroup"
           aria-label="Mode data"
         >
@@ -62,13 +56,12 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({
                 aria-checked={active}
                 aria-label={`${getModeLabel(m)} — ${getModeHint(m)}`}
                 title={getModeHint(m)}
-                className={`pressable px-3 py-1 min-h-[44px] sm:min-h-[32px] rounded-full font-sans text-[11px] transition-colors duration-150 flex items-center gap-1.5 cursor-pointer focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none ${
+                className={`pressable px-2 py-1 min-h-[44px] sm:min-h-[28px] flex items-center font-sans text-[11px] border-b-2 cursor-pointer transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none ${
                   active
-                    ? 'bg-slash-obsidian text-slash-paper font-medium'
-                    : 'text-slash-fog hover:text-slash-bone'
+                    ? 'border-slash-copper text-slash-paper font-medium'
+                    : 'border-transparent text-slash-fog hover:text-slash-bone'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass(m)}`} aria-hidden="true" />
                 {getModeLabel(m)}
               </button>
             );
@@ -76,11 +69,10 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({
         </div>
       ) : (
         <div
-          className="inline-flex items-center gap-2 px-3 py-1 min-h-[32px] rounded-full border border-slash-graphite bg-slash-carbon text-xs font-sans text-slash-bone"
+          className="inline-flex items-center gap-2 px-3 py-1 min-h-[30px] rounded border border-slash-graphite bg-slash-carbon text-xs font-sans text-slash-bone"
           title={getModeHint(mode)}
           aria-label={`Mode ${getModeLabel(mode)}`}
         >
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass(mode)}`} aria-hidden="true" />
           <span className="font-medium">{getModeLabel(mode)}</span>
           <span className="text-[11px] text-slash-fog hidden sm:inline">
             · {getModeHint(mode)}
@@ -90,7 +82,7 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({
 
       {creditEstimate !== undefined && creditEstimate !== null && (
         <div
-          className="inline-flex items-center gap-1 px-2.5 py-1 min-h-[32px] rounded-full bg-slash-carbon border border-slash-graphite text-[11px] text-slash-mist font-mono"
+          className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 min-h-[32px] rounded-md bg-slash-carbon border border-slash-graphite text-[11px] text-slash-mist font-mono"
           title="Perkiraan kuota API yang dipakai untuk pemeriksaan ini"
         >
           ~{creditEstimate} kredit

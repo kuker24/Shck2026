@@ -94,13 +94,7 @@ export const MarketStatusBar: React.FC = () => {
       aria-live="off"
       className="flex items-center gap-2 min-w-0 text-[11px] font-sans text-slash-fog"
     >
-      <span
-        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-          marketStatus.isOpen ? 'bg-status-success' : 'bg-slash-steel'
-        }`}
-        aria-hidden="true"
-      />
-      <span className={marketStatus.isOpen ? 'text-slash-paper font-medium' : 'text-slash-mist'}>
+      <span className={marketStatus.isOpen ? 'text-trade-buy font-medium' : 'text-slash-mist font-medium'}>
         {marketStatus.label}
       </span>
       <span className="font-mono-numbers text-slash-mist truncate hidden sm:inline">{marketStatus.session}</span>

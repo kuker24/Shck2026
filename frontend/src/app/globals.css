@@ -79,7 +79,6 @@ body {
 
 .pressable {
   transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
-  will-change: transform;
 }
 
 .pressable:active {
@@ -89,18 +88,24 @@ body {
 /* ── Gilded gradient (free float bar) ─────────────────────── */
 
 .gilded-gradient {
-  background: linear-gradient(103deg, rgb(174, 147, 87), rgb(255, 240, 204) 40%, rgb(174, 147, 87) 70%, rgba(189, 157, 79, 0.2));
+  background: linear-gradient(
+    103deg,
+    var(--color-slash-gilded),
+    color-mix(in srgb, var(--color-slash-gilded) 35%, var(--color-slash-paper)) 40%,
+    var(--color-slash-gilded) 70%,
+    color-mix(in srgb, var(--color-slash-gilded) 20%, transparent)
+  );
 }
 
 /* ── Browser surfaces ─────────────────────────────────────── */
 
 input, textarea {
-  caret-color: #cc9166;
+  caret-color: var(--color-slash-copper);
 }
 
 ::selection {
-  background: color-mix(in srgb, #cc9166 28%, transparent);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--color-slash-copper) 28%, transparent);
+  color: var(--color-slash-paper);
 }
 
 ::-webkit-scrollbar {
@@ -109,24 +114,24 @@ input, textarea {
 }
 
 ::-webkit-scrollbar-track {
-  background: #08080a;
+  background: var(--color-slash-obsidian);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1c1d22;
+  background: var(--color-slash-graphite);
   border-radius: 9999px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   ::-webkit-scrollbar-thumb:hover {
-    background: #2e3038;
+    background: var(--color-slash-slate);
   }
 }
 
 /* ── Overlay / drawer / modal / toast (Emil motion) ───────── */
 
 .overlay-dim {
-  background: rgb(8 8 10 / 0.8);
+  background: color-mix(in srgb, var(--color-slash-obsidian) 80%, transparent);
   opacity: 1;
   transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -194,13 +199,24 @@ input, textarea {
 @keyframes result-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
-    filter: blur(1px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
+  }
+}
+
+.page-fade-in {
+  animation: page-fade-in 160ms ease-out both;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -231,7 +247,7 @@ input, textarea {
   background: linear-gradient(
     100deg,
     transparent 20%,
-    rgb(240 241 245 / 0.06) 50%,
+    color-mix(in srgb, var(--color-slash-bone) 6%, transparent) 50%,
     transparent 80%
   );
   animation: skeleton-shimmer 1.6s ease-in-out infinite;
@@ -254,7 +270,7 @@ input, textarea {
 
 @media (hover: hover) and (pointer: fine) {
   .card-interactive:hover {
-    border-color: #2e3038;
+    border-color: var(--color-slash-slate);
   }
 }
 
@@ -266,7 +282,7 @@ input, textarea {
 
 @media (hover: hover) and (pointer: fine) {
   .row-hover:hover {
-    background-color: rgb(18 19 23 / 0.5);
+    background-color: color-mix(in srgb, var(--color-slash-carbon) 50%, transparent);
   }
 }
 
@@ -282,12 +298,17 @@ input, textarea {
   .card-interactive,
   .row-hover,
   .skeleton::after,
+  .page-fade-in,
   .pressable {
     animation: none !important;
     transition: none !important;
     transform: none !important;
     filter: none !important;
-    opacity: 1 !important;
+  }
+
+  .overlay-dim[data-open='false'],
+  .drawer-panel[data-open='false'] {
+    opacity: 0;
   }
 
   .step-running-bar {

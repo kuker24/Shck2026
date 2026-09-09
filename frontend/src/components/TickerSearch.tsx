@@ -18,14 +18,16 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
   onOpenCommandDialog,
 }) => {
   const [ticker, setTicker] = useState(initialTicker);
+  const [prevInitialTicker, setPrevInitialTicker] = useState(initialTicker);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  if (initialTicker !== prevInitialTicker) {
+    setPrevInitialTicker(initialTicker);
     if (initialTicker) {
       setTicker(initialTicker);
     }
-  }, [initialTicker]);
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -79,7 +81,7 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
   };
 
   const chipClass =
-    'pressable px-3.5 py-1.5 min-h-[44px] sm:min-h-[32px] rounded-full border border-slash-graphite bg-slash-carbon hover:border-slash-slate hover:text-slash-paper focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none text-slash-mist font-mono text-[11px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150';
+    'pressable px-3 py-1 min-h-[44px] sm:min-h-[28px] rounded border border-slash-graphite bg-slash-carbon/80 hover:border-slash-copper/60 hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none text-slash-mist font-mono text-[11px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150';
 
   const submitLabel = isLoading
     ? COPY.loading
@@ -149,12 +151,12 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
         </button>
       </form>
 
-      <p id="ticker-hint" className="text-[11px] text-slash-mist font-sans pl-1">
+      <p id="ticker-hint" className="text-sm text-slash-mist font-serif leading-relaxed pl-1">
         {COPY.search_hint}
       </p>
 
       {errorMsg && (
-        <p id="ticker-error" className="text-xs text-status-error font-sans pl-1" role="alert">
+        <p id="ticker-error" className="text-sm text-status-error font-serif leading-relaxed pl-1" role="alert">
           {errorMsg}
         </p>
       )}

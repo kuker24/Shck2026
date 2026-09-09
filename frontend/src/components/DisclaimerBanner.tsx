@@ -16,10 +16,9 @@ export const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
     <p
       role="note"
       aria-label="Penafian: bukan saran investasi"
-      className={`text-xs text-slash-mist leading-relaxed max-w-[65ch] flex gap-2 ${className}`}
+      className={`text-sm text-slash-mist font-serif leading-relaxed max-w-[65ch] ${className}`}
     >
-      <span aria-hidden="true" className="text-slash-copper shrink-0 font-mono">!</span>
-      <span>{variant === 'compact' ? COPY.disclaimer_short : COPY.disclaimer_long}</span>
+      {variant === 'compact' ? COPY.disclaimer_short : COPY.disclaimer_long}
     </p>
   );
 };

@@ -38,7 +38,7 @@ export const NarrativePanel: React.FC<NarrativePanelProps> = ({
   const isLong = narrative.length > 600;
 
   return (
-    <section aria-label={COPY.narrative_title} className={`card-interactive border border-slash-graphite rounded-lg p-5 sm:p-6 ${className}`}>
+    <section aria-label={COPY.narrative_title} className={`border border-slash-graphite rounded-lg p-5 sm:p-6 ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">{COPY.narrative_title}</h3>
         {narrative && (
@@ -56,8 +56,8 @@ export const NarrativePanel: React.FC<NarrativePanelProps> = ({
       </div>
 
       {narrative ? (
-        <div className="border-l border-slash-copper/40 pl-4">
-          <p className={`text-sm text-slash-bone leading-relaxed whitespace-pre-line max-w-[65ch] ${!expanded && isLong ? 'line-clamp-6' : ''}`}>
+        <div>
+          <p className={`text-base text-slash-bone font-serif leading-relaxed whitespace-pre-line max-w-[65ch] ${!expanded && isLong ? 'line-clamp-6' : ''}`}>
             {narrative}
           </p>
           {isLong && (
@@ -72,7 +72,7 @@ export const NarrativePanel: React.FC<NarrativePanelProps> = ({
           )}
         </div>
       ) : (
-        <p className="text-sm text-slash-mist">{COPY.narrative_empty}</p>
+        <p className="text-sm text-slash-mist font-serif leading-relaxed">{COPY.narrative_empty}</p>
       )}
     </section>
   );

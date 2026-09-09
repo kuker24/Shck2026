@@ -97,7 +97,7 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
   const tabClass = (id: TabId) =>
     `flex-1 py-2.5 px-3 min-h-[44px] text-center cursor-pointer text-xs font-sans transition-colors duration-150 inline-flex items-center justify-center ${
       activeTab === id
-        ? 'text-slash-paper border-b-2 border-slash-copper font-medium'
+        ? 'text-slash-paper border-b border-slash-copper font-medium'
         : 'text-slash-fog hover:text-slash-bone'
     }`;
 
@@ -109,9 +109,13 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
       aria-hidden={!isOpen}
     >
       <div
+        role="presentation"
         className="overlay-dim absolute inset-0"
         data-open={isOpen ? 'true' : 'false'}
         onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose();
+        }}
       />
       <div
         ref={drawerRef}
@@ -151,66 +155,47 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
             <div className="space-y-5 text-sm font-sans">
               <dl className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <dt className="text-slash-fog">Pembuat</dt>
-                  <dd className="text-slash-paper mt-0.5">Fahmi</dd>
-                </div>
-                <div>
-                  <dt className="text-slash-fog">Kode tim</dt>
-                  <dd className="font-mono text-slash-paper mt-0.5">SKT7-R2C4</dd>
+                  <dt className="text-slash-fog">Pengembang</dt>
+                  <dd className="text-slash-paper mt-0.5">Fahmi · SKT7-R2C4</dd>
                 </div>
                 <div>
                   <dt className="text-slash-fog">Kompetisi</dt>
-                  <dd className="text-slash-paper mt-0.5">Sectors 2026</dd>
-                </div>
-                <div>
-                  <dt className="text-slash-fog">Jalur</dt>
-                  <dd className="text-slash-paper mt-0.5">Track 1 · agen kustom</dd>
+                  <dd className="text-slash-paper mt-0.5">Sectors 2026 · Jalur 1</dd>
                 </div>
               </dl>
 
-              <div className="space-y-4 text-xs leading-relaxed">
+              <div className="space-y-3 text-xs leading-relaxed max-w-[60ch]">
                 <div>
-                  <h3 className="font-medium text-slash-paper mb-1">Perencana</h3>
-                  <p className="text-slash-fog">
-                    Menghitung kredit API, memilih get_top_traders dan get_ownership, menahan kuota.
-                  </p>
+                  <h3 className="font-medium text-slash-paper mb-0.5">Perencana</h3>
+                  <p className="text-slash-fog max-w-[60ch]">Alokasi kuota Sectors API.</p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-slash-paper mb-1">Eksekutor</h3>
-                  <p className="text-slash-fog">
-                    Mengambil data broker dan free float secara paralel dari API Sectors.
-                  </p>
+                  <h3 className="font-medium text-slash-paper mb-0.5">Eksekutor</h3>
+                  <p className="text-slash-fog max-w-[60ch]">Pengambilan broker summary &amp; free float.</p>
                 </div>
                 <div>
-                  <h3 className="font-medium text-slash-paper mb-1">Peninjau</h3>
-                  <p className="text-slash-fog">
-                    Memeriksa angka, menolak rekomendasi beli atau jual, menempel penafian UU Pasar Modal No. 8/1995.
-                  </p>
+                  <h3 className="font-medium text-slash-paper mb-0.5">Peninjau</h3>
+                  <p className="text-slash-fog max-w-[60ch]">Verifikasi integritas data &amp; penafian kepatuhan.</p>
                 </div>
               </div>
-
-              <p className="text-[11px] text-slash-steel leading-relaxed">
-                Pipeline hanya membaca data. Tidak ada perintah beli atau jual, dan tidak menyimpan kredensial nasabah.
-              </p>
             </div>
           )}
 
           {activeTab === 'steps' && (
             <div className="space-y-0 text-xs divide-y divide-slash-graphite/50">
               {result?.steps.map((s, i) => (
-                <div key={s.id || i} className="py-3.5 space-y-1">
+                <div key={s.id || i} className="py-3 space-y-1">
                   <div className="flex items-center justify-between font-mono text-[11px]">
                     <span className="text-slash-copper">
-                      {String(i + 1).padStart(2, '0')} · {s.role === 'planner' ? 'perencana' : s.role === 'critic' ? 'peninjau' : 'pelaksana'}
+                      {String(i + 1).padStart(2, '0')} · {s.role}
                     </span>
                     <span className={STATUS_CLASS[s.status] || 'text-slash-steel'}>{STATUS_LABEL[s.status] ?? s.status}</span>
                   </div>
                   <div className="text-slash-paper font-sans">{s.title}</div>
-                  {s.detail && <p className="text-slash-fog leading-relaxed">{s.detail}</p>}
                 </div>
               )) ?? (
                 <p className="text-slash-fog py-10 text-center font-sans">
-                  Belum ada tahapan. Periksa sebuah kode efek dulu.
+                  Belum ada tahapan.
                 </p>
               )}
             </div>

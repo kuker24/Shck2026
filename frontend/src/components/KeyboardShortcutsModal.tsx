@@ -81,13 +81,19 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="Pintasan keyboard"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 overlay-dim"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
       <div
         ref={panelRef}
+        role="document"
         className="modal-panel w-full max-w-md bg-slash-onyx border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">Pintasan keyboard</h3>

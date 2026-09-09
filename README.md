@@ -83,27 +83,31 @@ Investor ritel di Bursa Efek Indonesia (IDX) seringkali memantau lonjakan atau p
 ### A. Menjalankan Frontend (Next.js)
 ```bash
 cd frontend
+cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 npm install
 npm run dev
 ```
-Buka peramban di [http://localhost:3000](http://localhost:3000).
+Buka peramban di [http://localhost:3000](http://localhost:3000). Mode **Simulasi**, klik **Periksa BBCA**.
 
-*Secara bawaan, frontend berjalan dalam **Mock Mode** sehingga dapat didemokan tanpa memerlukan backend hidup atau menghabiskan kredit API.*
+Tanpa `.env.local`, frontend memakai mock lokal (0 kredit). Dengan `.env.local` mengarah ke backend, mode Simulasi tetap 0 kredit lewat `POST /v1/investigate`. Jangan commit `.env.local`.
 
 ### B. Menjalankan Backend (FastAPI)
 ```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt   # atau pip install fastapi "uvicorn[standard]" pydantic httpx python-dotenv
+pip install -r requirements.txt
 
-# Jalankan server
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
-- API Health Check: [http://localhost:8000/health](http://localhost:8000/health)
-- Dokumentasi Interaktif OpenAPI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Health: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- OpenAPI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Mock: `POST http://127.0.0.1:8000/v1/investigate` body `{"ticker":"BBCA","mode":"mock"}`
 
-### C. Menjalankan Unit Test Backend
+### C. FE + BE mock end-to-end
+Jalankan backend di port **8000** dan frontend di port **3000** (dua terminal). Di UI pilih Simulasi, **Periksa BBCA** — harus muncul status 4/4, tabel broker, free float, dan ringkasan + disclaimer.
+
+### D. Unit test backend
 ```bash
 cd backend
 .venv/bin/python -m unittest discover -s tests

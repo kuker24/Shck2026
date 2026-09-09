@@ -34,4 +34,4 @@
 
 - [ ] Problem statement, checklist, video beats completed.
 - [ ] Demo video follows `VIDEO_BEATS.md`.
-- [ ] Team invite `SKT7RR2C4` confirmed; credits not exhausted.
+- [ ] Team invite `SKT7-R2C4` confirmed; credits not exhausted.

@@ -56,6 +56,7 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const parsed = parseTicker(ticker);
     if (!parsed.ok) {
       setErrorMsg(tickerErrorCopy(parsed.reason));
@@ -88,7 +89,12 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
 
   return (
     <div className="w-full space-y-3">
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row sm:items-stretch gap-2 w-full" role="search">
+      <form
+        role="search"
+        method="dialog"
+        onSubmit={handleSubmit}
+        className="flex flex-col sm:flex-row sm:items-stretch gap-2 w-full"
+      >
         <label htmlFor="ticker-search-input" className="sr-only">
           Kode efek saham IDX
         </label>

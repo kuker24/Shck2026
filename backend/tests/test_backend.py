@@ -3,10 +3,11 @@ import unittest
 from starlette.testclient import TestClient
 from app.main import app
 from app.models.schemas import InvestigateRequest
-from app.agent.loop import run_investigate_loop
+from app.agent.loop import merge_refinement_evidence, run_investigate_loop
+from app.agent.critic import Critic
 from app.security.guardrail import sanitize_ticker, sanitize_narrative
 from app.tools.allowlist import verify_tool_allowed, ToolNotAllowedError
-from app.tools.cache import cache_put, cache_get
+from app.tools.cache import cache_put, cache_get, CacheStore
 
 class TestAegisBackend(unittest.TestCase):
     def setUp(self):
@@ -85,6 +86,91 @@ class TestAegisBackend(unittest.TestCase):
     def test_api_invalid_ticker(self):
         resp = self.client.post("/v1/investigate", json={"ticker": "Z", "mode": "mock"})
         self.assertEqual(resp.status_code, 422)  # Pydantic min_length validation
+
+    def test_merge_refinement_evidence(self):
+        brokers = {"top_buyers": [], "top_sellers": []}
+        ff = {"percent": 10.0}
+        merged_b, merged_f = merge_refinement_evidence(
+            brokers,
+            ff,
+            "fetch_broker_summary_top",
+            {
+                "top_buyers": [{"broker_code": "YK", "broker_name": "Yuanta", "net_value": 1, "buy_value": 2, "sell_value": 1, "rank": 1}],
+                "top_sellers": [],
+            },
+        )
+        self.assertEqual(merged_b["top_buyers"][0]["broker_code"], "YK")
+        self.assertEqual(merged_f["percent"], 10.0)
+
+    def test_critic_requests_one_broker_retry(self):
+        first = Critic.review(
+            "BBCA",
+            {"brokers": {"top_buyers": [], "top_sellers": []}, "can_retry_broker": True},
+            "Narasi faktual.",
+        )
+        self.assertTrue(first.needs_refinement)
+        self.assertEqual(first.refinement_tool, "fetch_broker_summary_top")
+        second = Critic.review(
+            "BBCA",
+            {"brokers": {"top_buyers": [{"broker_code": "YK"}], "top_sellers": []}},
+            "Narasi faktual.",
+            refinement_count=1,
+        )
+        self.assertFalse(second.needs_refinement)
+
+    def test_cache_miss_falls_back_to_mock(self):
+        CacheStore._cache.pop("BBCA", None)
+        CacheStore._timestamps.pop("BBCA", None)
+        req = InvestigateRequest(ticker="BBCA", mode="cache")
+        resp = asyncio.run(run_investigate_loop(req))
+        self.assertEqual(resp.mode, "mock")
+        details = " ".join((s.detail or "") for s in resp.steps)
+        self.assertIn("Cache kosong", details)
+        self.assertGreater(len(resp.brokers.top_buyers), 0)
+        self.assertIn("Ini bukan saran investasi", resp.disclaimer)
+
+    def test_live_refinement_merges_and_reruns_critic(self):
+        from unittest.mock import patch
+        from app.agent.executor import ToolExecutionResult
+
+        empty_brokers = {"top_buyers": [], "top_sellers": []}
+        filled_brokers = {
+            "top_buyers": [
+                {
+                    "broker_code": "YK",
+                    "broker_name": "Yuanta",
+                    "net_value": 1.0,
+                    "buy_value": 2.0,
+                    "sell_value": 1.0,
+                    "rank": 1,
+                }
+            ],
+            "top_sellers": [],
+        }
+        ff = {"percent": 45.2, "shares": 1.0, "as_of": None, "note": None}
+        broker_calls = {"n": 0}
+
+        async def fake_tool(name, args):
+            if name == "fetch_broker_summary_top":
+                broker_calls["n"] += 1
+                data = empty_brokers if broker_calls["n"] == 1 else filled_brokers
+                return ToolExecutionResult(name, "done", data=data)
+            if name == "fetch_free_float":
+                return ToolExecutionResult(name, "done", data=ff)
+            if name == "draft_narrative":
+                return ToolExecutionResult(name, "done", data="Narasi faktual tanpa saran.")
+            return ToolExecutionResult(name, "error", error=f"unexpected {name}")
+
+        with patch("app.agent.loop.RateGovernor.check_and_record", return_value=None), patch(
+            "app.agent.loop.CreditGovernor.validate_plan_credits", return_value=2.0
+        ), patch("app.agent.loop.Executor.run_tool", side_effect=fake_tool):
+            resp = asyncio.run(run_investigate_loop(InvestigateRequest(ticker="BBCA", mode="live")))
+
+        self.assertEqual(resp.mode, "live")
+        self.assertEqual(broker_calls["n"], 2)
+        self.assertEqual(resp.brokers.top_buyers[0].broker_code, "YK")
+        self.assertIn("Ini bukan saran investasi", resp.disclaimer)
+        self.assertTrue(any("Refinement" in (s.detail or "") for s in resp.steps))
 
 if __name__ == "__main__":
     unittest.main()

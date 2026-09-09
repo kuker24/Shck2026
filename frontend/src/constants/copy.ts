@@ -39,6 +39,7 @@ export const COPY = {
   empty_suggest: 'Coba kode lain atau kembali ke contoh yang pasti ada datanya.',
   idle_hint: 'Masukkan kode efek, lalu baca siapa yang paling banyak beli, siapa yang paling banyak jual, dan berapa saham yang beredar di publik.',
   toast_live_fail: 'Koneksi langsung gagal. Menampilkan data simulasi.',
+  toast_cache_miss: 'Data tersimpan tidak ada. Menampilkan simulasi.',
   toast_copied: 'Ringkasan disalin',
   toast_copy_fail: 'Gagal menyalin. Coba lagi.',
   broker_section_hint: 'Nilai = total beli dikurangi total jual per sekuritas.',

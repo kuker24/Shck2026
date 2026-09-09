@@ -1,5 +1,6 @@
 import { InvestigateRequest, InvestigateResponse, Step } from '@/types/investigate';
 import { COPY } from '@/constants/copy';
+import { normalizeInvestigateResponse } from '@/lib/normalizeInvestigate';
 import mockBBCA from '@/data/mocks/investigate_bbca.json';
 import mockEmpty from '@/data/mocks/investigate_empty.json';
 
@@ -152,7 +153,7 @@ export async function runInvestigation(
         );
       }
 
-      const data: InvestigateResponse = await response.json();
+      const data = normalizeInvestigateResponse(await response.json(), ticker);
 
       stepsState[1].status = data.error ? 'error' : 'done';
       stepsState[2].status = data.error ? 'skipped' : 'running';

@@ -18,6 +18,22 @@ from .executor import Executor
 from .critic import Critic, DEFAULT_DISCLAIMER
 from ..tools.cache import cache_get, cache_put
 
+
+def merge_refinement_evidence(
+    broker_data: dict[str, Any],
+    ff_data: dict[str, Any],
+    tool_name: str,
+    tool_data: Any,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if not isinstance(tool_data, dict) or not tool_data:
+        return broker_data, ff_data
+    if tool_name == "fetch_broker_summary_top":
+        return tool_data, ff_data
+    if tool_name == "fetch_free_float":
+        return broker_data, tool_data
+    return broker_data, ff_data
+
+
 async def run_investigate_loop(request: InvestigateRequest) -> InvestigateResponse:
     start_time = time.perf_counter()
     tools_executed: list[str] = []
@@ -47,6 +63,7 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
         )
 
     requested_mode = request.mode
+    cache_miss = False
 
     # 2. CACHE MODE HANDLER
     if requested_mode == "cache":
@@ -63,7 +80,7 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
             )
             cached_data["mode"] = "cache"
             return InvestigateResponse.model_validate(cached_data)
-        # Cache miss: continue to mock or live fallback
+        cache_miss = True
         requested_mode = "mock"
 
     # 3. MOCK MODE HANDLER
@@ -87,6 +104,22 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
             Step(id=p.id, role=p.role, title=p.title, status="done", detail=p.detail)  # type: ignore
             for p in plan.steps
         ]
+        if cache_miss:
+            if served_steps:
+                prior = served_steps[0].detail or ""
+                served_steps[0].detail = (
+                    f"{prior} Cache kosong; memakai data simulasi.".strip()
+                )
+            else:
+                served_steps.append(
+                    Step(
+                        id="s0",
+                        role="planner",
+                        title="Cache kosong",
+                        status="done",
+                        detail="Data tersimpan tidak ada; memakai data simulasi.",
+                    )
+                )
 
         response = InvestigateResponse(
             ticker=ticker,
@@ -104,7 +137,7 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
         latency = (time.perf_counter() - start_time) * 1000
         AuditLogger.log_investigation(
             ticker=ticker,
-            requested_mode="mock",
+            requested_mode="cache" if cache_miss else "mock",
             served_mode="mock",
             tools_run=tools_executed,
             credit_estimate=0.0,
@@ -222,9 +255,22 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
     tools_executed.append("fetch_free_float")
     ff_res = await Executor.run_tool("fetch_free_float", {"ticker": ticker})
     total_credits += ff_res.credits_used
-    steps_out[-1].status = "done"
-    steps_out[-1].detail = f"Free float {ticker} siap"
-    ff_data = ff_res.data or {}
+    if ff_res.status == "error" or not isinstance(ff_res.data, dict):
+        steps_out[-1].status = "done"
+        err_note = ff_res.error or "data tidak lengkap"
+        steps_out[-1].detail = (
+            f"Free float live gagal ({err_note}); pemeriksaan broker tetap dilanjutkan"
+        )
+        ff_data = {
+            "percent": None,
+            "shares": None,
+            "as_of": None,
+            "note": f"Free float live tidak tersedia: {err_note}",
+        }
+    else:
+        steps_out[-1].status = "done"
+        steps_out[-1].detail = f"Free float {ticker} siap"
+        ff_data = ff_res.data
 
     # Draft raw narrative
     tools_executed.append("draft_narrative")
@@ -252,17 +298,49 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
 
     critic_review = Critic.review(
         ticker=ticker,
-        observations={"brokers": broker_data, "free_float": ff_data},
+        observations={
+            "brokers": broker_data,
+            "free_float": ff_data,
+            "can_retry_broker": True,
+        },
         drafted_narrative=draft_text,
     )
 
-    # Handle single refinement step if needed
     if critic_review.needs_refinement and critic_review.refinement_tool:
-        ref_res = await Executor.run_tool(critic_review.refinement_tool, critic_review.refinement_args or {})
+        tools_executed.append(critic_review.refinement_tool)
+        ref_res = await Executor.run_tool(
+            critic_review.refinement_tool,
+            critic_review.refinement_args or {"ticker": ticker},
+        )
         total_credits += ref_res.credits_used
+        if ref_res.status != "error":
+            broker_data, ff_data = merge_refinement_evidence(
+                broker_data,
+                ff_data,
+                critic_review.refinement_tool,
+                ref_res.data,
+            )
+            narrative_res = await Executor.run_tool(
+                "draft_narrative",
+                {
+                    "ticker": ticker,
+                    "brokers": broker_data,
+                    "free_float": ff_data,
+                    "is_mock": False,
+                },
+            )
+            draft_text = str(narrative_res.data)
+        critic_review = Critic.review(
+            ticker=ticker,
+            observations={"brokers": broker_data, "free_float": ff_data},
+            drafted_narrative=draft_text,
+            refinement_count=1,
+        )
+        steps_out[-1].detail = "Refinement selesai; narasi dan disclaimer dari critic terakhir"
+    else:
+        steps_out[-1].detail = "Objektivitas narasi disetujui, disclaimer hukum disematkan"
 
     steps_out[-1].status = "done"
-    steps_out[-1].detail = "Objektivitas narasi disetujui, disclaimer hukum disematkan"
 
     final_response = InvestigateResponse(
         ticker=ticker,

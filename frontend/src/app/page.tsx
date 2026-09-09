@@ -87,6 +87,8 @@ export default function HomePage() {
 
       if (mode === 'live' && res.mode !== 'live') {
         setToastMessage(COPY.toast_live_fail);
+      } else if (mode === 'cache' && res.mode !== 'cache') {
+        setToastMessage(COPY.toast_cache_miss);
       }
 
       setResult(res);
@@ -101,10 +103,11 @@ export default function HomePage() {
     }
   };
 
-  const hasEmptyOrError =
-    result &&
-    (result.error ||
-      (result.brokers.top_buyers.length === 0 && result.brokers.top_sellers.length === 0));
+  const buyers = result?.brokers?.top_buyers ?? [];
+  const sellers = result?.brokers?.top_sellers ?? [];
+  const hasEmptyOrError = Boolean(
+    result && (result.error || (buyers.length === 0 && sellers.length === 0))
+  );
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-slash-obsidian text-slash-bone">
@@ -213,8 +216,8 @@ export default function HomePage() {
                 <div className="result-enter flex flex-col gap-8">
                   <StepsTimeline steps={result.steps} />
                   <BrokerAnalysisView
-                    topBuyers={result.brokers.top_buyers}
-                    topSellers={result.brokers.top_sellers}
+                    topBuyers={buyers}
+                    topSellers={sellers}
                   />
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <FreeFloatCard data={result.free_float} />

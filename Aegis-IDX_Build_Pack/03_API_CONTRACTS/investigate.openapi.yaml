@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Aegis-IDX Investigate API
+  version: 1.0.0
+  description: |
+    Track 1 investigate endpoint. Modes mock|live|cache.
+    Not investment advice. No trade execution.
+servers:
+  - url: http://localhost:8000
+    description: Local FastAPI
+paths:
+  /v1/investigate:
+    post:
+      summary: Run broker-flow investigation for one IDX ticker
+      operationId: investigate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestigateRequest'
+            examples:
+              bbca_mock:
+                value:
+                  ticker: BBCA
+                  mode: mock
+      responses:
+        '200':
+          description: Investigation result (including soft-fail fallbacks)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestigateResponse'
+        '400':
+          description: Invalid ticker or mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    InvestigateRequest:
+      type: object
+      required: [ticker]
+      properties:
+        ticker:
+          type: string
+          minLength: 2
+          maxLength: 10
+          example: BBCA
+          description: IDX ticker symbol
+        mode:
+          type: string
+          enum: [mock, live, cache]
+          default: mock
+    InvestigateResponse:
+      type: object
+      required:
+        - ticker
+        - mode
+        - steps
+        - brokers
+        - free_float
+        - narrative
+        - disclaimer
+      properties:
+        ticker:
+          type: string
+          example: BBCA
+        mode:
+          type: string
+          enum: [mock, live, cache]
+          description: Mode actually served
+        as_of:
+          type: string
+          format: date-time
+          nullable: true
+        credit_estimate:
+          type: number
+          nullable: true
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+        brokers:
+          $ref: '#/components/schemas/Brokers'
+        free_float:
+          $ref: '#/components/schemas/FreeFloat'
+        narrative:
+          type: string
+          description: Short Bahasa Indonesia investigative narrative (non-advice)
+        disclaimer:
+          type: string
+        error:
+          type: object
+          nullable: true
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+    Step:
+      type: object
+      required: [id, role, title, status]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [planner, executor, critic]
+        title:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, done, error, skipped]
+        detail:
+          type: string
+    Brokers:
+      type: object
+      required: [top_buyers, top_sellers]
+      properties:
+        top_buyers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrokerRow'
+        top_sellers:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrokerRow'
+    BrokerRow:
+      type: object
+      properties:
+        broker_code:
+          type: string
+          example: YK
+        broker_name:
+          type: string
+          example: "Yuanta Sekuritas"
+        net_value:
+          type: number
+          description: Net value in IDR (signed conventions documented by BE)
+        buy_value:
+          type: number
+        sell_value:
+          type: number
+        rank:
+          type: integer
+    FreeFloat:
+      type: object
+      properties:
+        percent:
+          type: number
+          nullable: true
+          description: Free float percentage if available
+        shares:
+          type: number
+          nullable: true
+        as_of:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string

@@ -1,0 +1,296 @@
+@import "tailwindcss";
+
+/* ── Design tokens ────────────────────────────────────────────
+   Single authority: slash-* only. No aegis-*, no :root duplicates.
+   Unused tokens removed. Semantic aliases added.
+   ──────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Neutral scale */
+  --color-slash-obsidian: #08080a;
+  --color-slash-onyx: #040406;
+  --color-slash-carbon: #121317;
+  --color-slash-graphite: #1c1d22;
+  --color-slash-slate: #2e3038;
+  --color-slash-steel: #858997;
+  --color-slash-fog: #9ea1af;
+  --color-slash-mist: #c2c5cf;
+  --color-slash-bone: #f0f1f5;
+  --color-slash-paper: #ffffff;
+
+  /* Accent */
+  --color-slash-copper: #cc9166;
+  --color-slash-gilded: #ae9357;
+
+  /* Semantic: trade */
+  --color-trade-buy: #10b981;
+  --color-trade-buy-dim: #052e16;
+  --color-trade-sell: #f43f5e;
+  --color-trade-sell-dim: #4c0519;
+
+  /* Semantic: status (non-trade contexts) */
+  --color-status-success: #10b981;
+  --color-status-error: #f43f5e;
+
+  /* Typography */
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Easing (Emil) */
+  --ease-emil-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Radius tokens */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  background-color: var(--color-slash-obsidian);
+  color: var(--color-slash-bone);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
+  text-rendering: optimizeLegibility;
+}
+
+/* Visible keyboard focus everywhere (a11y floor) */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-slash-copper);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Tabular numbers for data ─────────────────────────────── */
+
+.font-mono-numbers {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Pressable (Emil: 160ms scale feedback) ───────────────── */
+
+.pressable {
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
+}
+
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* ── Gilded gradient (free float bar) ─────────────────────── */
+
+.gilded-gradient {
+  background: linear-gradient(103deg, rgb(174, 147, 87), rgb(255, 240, 204) 40%, rgb(174, 147, 87) 70%, rgba(189, 157, 79, 0.2));
+}
+
+/* ── Browser surfaces ─────────────────────────────────────── */
+
+input, textarea {
+  caret-color: #cc9166;
+}
+
+::selection {
+  background: color-mix(in srgb, #cc9166 28%, transparent);
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #08080a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1c1d22;
+  border-radius: 9999px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2e3038;
+  }
+}
+
+/* ── Overlay / drawer / modal / toast (Emil motion) ───────── */
+
+.overlay-dim {
+  background: rgb(8 8 10 / 0.8);
+  opacity: 1;
+  transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.overlay-dim[data-open='false'] {
+  opacity: 0;
+}
+
+.drawer-panel {
+  transform: translateX(0);
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.drawer-panel[data-open='false'] {
+  transform: translateX(100%);
+  transition-duration: 180ms;
+}
+
+.modal-panel {
+  opacity: 1;
+  transform: scale(1);
+  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.toast-panel {
+  opacity: 1;
+  transform: translateY(0);
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@starting-style {
+  .modal-panel {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  .toast-panel {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+/* ── Copy label blur swap (Emil) ──────────────────────────── */
+
+.copy-label {
+  transition: filter 200ms ease, opacity 200ms ease;
+}
+
+.copy-label[data-swapping='true'] {
+  filter: blur(2px);
+  opacity: 0.7;
+}
+
+/* ── Result entrance stagger ──────────────────────────────── */
+
+.result-enter > * {
+  animation: result-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.result-enter > *:nth-child(1) { animation-delay: 0ms; }
+.result-enter > *:nth-child(2) { animation-delay: 50ms; }
+.result-enter > *:nth-child(3) { animation-delay: 100ms; }
+.result-enter > *:nth-child(4) { animation-delay: 150ms; }
+
+@keyframes result-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(1px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* ── Running step pulse ───────────────────────────────────── */
+
+@keyframes step-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.step-running-bar {
+  animation: step-pulse 2s ease-in-out infinite;
+}
+
+/* ── Skeleton shimmer (loading state) ─────────────────────── */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-slash-carbon);
+  border-radius: 6px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(240 241 245 / 0.06) 50%,
+    transparent 80%
+  );
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* ── Card hover ───────────────────────────────────────────── */
+
+.card-interactive {
+  transition: border-color 150ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-interactive:hover {
+    border-color: #2e3038;
+  }
+}
+
+/* ── Table row hover ──────────────────────────────────────── */
+
+.row-hover {
+  transition: background-color 80ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row-hover:hover {
+    background-color: rgb(18 19 23 / 0.5);
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-dim,
+  .drawer-panel,
+  .modal-panel,
+  .toast-panel,
+  .copy-label,
+  .result-enter > *,
+  .card-interactive,
+  .row-hover,
+  .skeleton::after,
+  .pressable {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  .step-running-bar {
+    animation: none !important;
+  }
+}

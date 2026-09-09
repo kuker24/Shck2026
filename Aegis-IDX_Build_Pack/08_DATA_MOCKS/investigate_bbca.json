@@ -1,0 +1,131 @@
+{
+  "ticker": "BBCA",
+  "mode": "mock",
+  "as_of": "2026-09-09T07:00:00Z",
+  "credit_estimate": 0,
+  "steps": [
+    {
+      "id": "s1",
+      "role": "planner",
+      "title": "Merencanakan investigasi",
+      "status": "done",
+      "detail": "Rencana: broker top + free float + narasi"
+    },
+    {
+      "id": "s2",
+      "role": "executor",
+      "title": "Mengambil ringkasan broker (top)",
+      "status": "done",
+      "detail": "Mock broker-summary/top untuk BBCA"
+    },
+    {
+      "id": "s3",
+      "role": "executor",
+      "title": "Mengambil free float",
+      "status": "done",
+      "detail": "Mock free float BBCA"
+    },
+    {
+      "id": "s4",
+      "role": "critic",
+      "title": "Meninjau hasil & menyusun narasi aman",
+      "status": "done",
+      "detail": "Tidak ada bahasa saran investasi; disclaimer dipasang"
+    }
+  ],
+  "brokers": {
+    "top_buyers": [
+      {
+        "broker_code": "YK",
+        "broker_name": "Yuanta Sekuritas Indonesia",
+        "net_value": 125000000000,
+        "buy_value": 210000000000,
+        "sell_value": 85000000000,
+        "rank": 1
+      },
+      {
+        "broker_code": "XS",
+        "broker_name": "Motilal Oswar Sekuritas Indonesia",
+        "net_value": 98000000000,
+        "buy_value": 150000000000,
+        "sell_value": 52000000000,
+        "rank": 2
+      },
+      {
+        "broker_code": "ZP",
+        "broker_name": "UOB Kay Hian Sekuritas",
+        "net_value": 72000000000,
+        "buy_value": 110000000000,
+        "sell_value": 38000000000,
+        "rank": 3
+      },
+      {
+        "broker_code": "CC",
+        "broker_name": "PT Mandiri Sekuritas",
+        "net_value": 54000000000,
+        "buy_value": 90000000000,
+        "sell_value": 36000000000,
+        "rank": 4
+      },
+      {
+        "broker_code": "EP",
+        "broker_name": "Elitbangun Persada (contoh)",
+        "net_value": 41000000000,
+        "buy_value": 70000000000,
+        "sell_value": 29000000000,
+        "rank": 5
+      }
+    ],
+    "top_sellers": [
+      {
+        "broker_code": "AK",
+        "broker_name": "UBS Sekuritas Indonesia",
+        "net_value": -118000000000,
+        "buy_value": 40000000000,
+        "sell_value": 158000000000,
+        "rank": 1
+      },
+      {
+        "broker_code": "RX",
+        "broker_name": "Macquarie Sekuritas Indonesia",
+        "net_value": -87000000000,
+        "buy_value": 25000000000,
+        "sell_value": 112000000000,
+        "rank": 2
+      },
+      {
+        "broker_code": "BK",
+        "broker_name": "J.P. Morgan Sekuritas Indonesia",
+        "net_value": -65000000000,
+        "buy_value": 30000000000,
+        "sell_value": 95000000000,
+        "rank": 3
+      },
+      {
+        "broker_code": "YC",
+        "broker_name": "Mirrae Asset Sekuritas Indonesia",
+        "net_value": -48000000000,
+        "buy_value": 22000000000,
+        "sell_value": 70000000000,
+        "rank": 4
+      },
+      {
+        "broker_code": "DR",
+        "broker_name": "DBS Vickers Sekuritas",
+        "net_value": -36000000000,
+        "buy_value": 18000000000,
+        "sell_value": 54000000000,
+        "rank": 5
+      }
+    ]
+  },
+  "free_float": {
+    "percent": 45.2,
+    "shares": 12345678900,
+    "as_of": "2026-06-30",
+    "note": "Snapshot mock untuk demo; verifikasi ke sumber resmi saat live."
+  },
+  "narrative": "Untuk BBCA (mode mock), aliran broker menunjukkan konsentrasi net buy pada beberapa sekuritas di sisi top buyers, sementara top sellers mencatat net sell yang signifikan. Free float mock sekitar 45.2% memberi konteks likuiditas saham yang dapat diperdagangkan. Ringkasan ini bersifat investigatif dan tidak menafsirkan arah harga ke depan.",
+  "disclaimer": "Ini bukan saran investasi. Aegis-IDX hanya menampilkan konteks investigasi data broker dan free float. Keputusan investasi adalah tanggung jawab Anda sendiri.",
+  "error": null
+}

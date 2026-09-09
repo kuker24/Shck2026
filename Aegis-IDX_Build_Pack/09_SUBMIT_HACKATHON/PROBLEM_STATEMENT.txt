@@ -1,0 +1,7 @@
+Aegis-IDX — Problem Statement (Sectors Hackathon Track 1)
+
+Retail participants in the Indonesia Stock Exchange (IDX) often see price moves without a clear, fast view of which brokers are driving net buy or net sell flow, or how free float frames tradable supply. Raw API data is fragmented and does not narrate an investigation path.
+
+Aegis-IDX solves this with a read-only investigative agent: the user enters one IDX ticker, a custom Planner–Executor–Critic loop gathers broker top buyers/sellers and free float (Sectors API in live mode; mocks for build/demo), and the UI presents steps, tables, and a short Bahasa Indonesia narrative with a permanent non-advice disclaimer.
+
+We deliberately do not give investment advice, do not auto-trade, and do not ship an MCP-wrapper-only product. Track 1 judging alignment: polished FE-first UX (40%), visible custom orchestration (30%), and credit-efficient Sectors data insight (30%). Solo builder Fahmi; team invite SKT7-R2C4; 1000 credits; deadline 30 September 2026.

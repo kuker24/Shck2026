@@ -1,0 +1,52 @@
+{
+  "ticker": "XXXX",
+  "mode": "mock",
+  "as_of": "2026-09-09T07:00:00Z",
+  "credit_estimate": 0,
+  "steps": [
+    {
+      "id": "s1",
+      "role": "planner",
+      "title": "Menyusun permintaan data broker dan free float",
+      "status": "done",
+      "detail": "Kode tidak dikenali atau data kosong"
+    },
+    {
+      "id": "s2",
+      "role": "executor",
+      "title": "Mengambil ringkasan transaksi broker",
+      "status": "error",
+      "detail": "Tidak ada data broker"
+    },
+    {
+      "id": "s3",
+      "role": "executor",
+      "title": "Mengambil data kepemilikan publik",
+      "status": "skipped",
+      "detail": "Dilewati karena data broker gagal"
+    },
+    {
+      "id": "s4",
+      "role": "critic",
+      "title": "Memeriksa netralitas data dan penafian",
+      "status": "done",
+      "detail": "Menampilkan keadaan kosong dan penafian"
+    }
+  ],
+  "brokers": {
+    "top_buyers": [],
+    "top_sellers": []
+  },
+  "free_float": {
+    "percent": null,
+    "shares": null,
+    "as_of": null,
+    "note": "Tidak tersedia"
+  },
+  "narrative": "",
+  "disclaimer": "Bukan saran investasi. Data transaksi broker dan free float untuk analisis faktual.",
+  "error": {
+    "code": "TICKER_NOT_FOUND",
+    "message": "Data tidak ditemukan / ticker tidak valid. Coba ticker lain (contoh: BBCA)."
+  }
+}

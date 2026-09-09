@@ -22,9 +22,9 @@
   --color-slash-copper: #cc9166;
   --color-slash-gilded: #ae9357;
 
-  /* Semantic: trade */
-  --color-trade-buy: #10b981;
-  --color-trade-buy-dim: #052e16;
+  /* Semantic: trade (slop-free gilded bullion palette) */
+  --color-trade-buy: color-mix(in srgb, #e5c07b 50%, #f0f1f5);
+  --color-trade-buy-dim: #262013;
   --color-trade-sell: #f43f5e;
   --color-trade-sell-dim: #4c0519;
 
@@ -45,6 +45,39 @@
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+}
+
+/* ── Page typography & header accent (Variant 3) ───────── */
+
+.page-root-v3 {
+  font-size: 16px;
+}
+
+.page-root-v3 p {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.page-root-v3 .text-slash-fog {
+  color: var(--color-slash-mist) !important;
+}
+
+.page-root-v3 header {
+  border-bottom-color: color-mix(in srgb, var(--color-slash-gilded) 30%, var(--color-slash-graphite));
+}
+
+.text-trade-buy {
+  color: color-mix(in srgb, #e5c07b 50%, #f0f1f5) !important;
+}
+
+.bg-trade-buy {
+  background-color: #d99b26 !important;
+}
+
+.compliance-badge {
+  border: 1px solid var(--color-slash-slate);
+  background-color: var(--color-slash-carbon);
+  color: var(--color-slash-bone);
 }
 
 /* ── Base ──────────────────────────────────────────────────── */

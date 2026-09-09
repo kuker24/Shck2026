@@ -109,614 +109,8 @@ export default function HomePage() {
   );
 
   return (
-    <div data-impeccable-variants="1c0441a2" data-impeccable-variant-count="3" style={{ display: "contents" }}>
-      {/* impeccable-variants-start 1c0441a2 */}
-      {/* Original */}
-      <div data-impeccable-variant="original">
-        <div className="min-h-[100dvh] flex flex-col bg-slash-obsidian text-slash-bone">
-          {/* ── Header: 56px, sticky ── */}
-          <header className="border-b border-slash-graphite bg-slash-onyx sticky top-0 z-40">
-            <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 min-h-14 py-2.5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 shrink-0 select-none">
-                <span className="font-sans text-sm font-bold tracking-[0.08em] uppercase text-slash-paper">
-                  Aegis
-                </span>
-                <span className="text-slash-gilded font-mono text-[11px] font-semibold border border-slash-graphite px-1.5 py-0.5 rounded">
-                  IDX
-                </span>
-              </div>
-              <div className="hidden md:flex items-center opacity-85">
-                <MarketStatusBar />
-              </div>
-              <nav aria-label="Mode dan jejak" className="flex items-center gap-3 shrink-0">
-                <div className="md:hidden">
-                  <MarketStatusBar />
-                </div>
-                <ModeBadge
-                  mode={selectedMode}
-                  creditEstimate={result?.credit_estimate}
-                  interactive={!isLoading}
-                  onModeChange={(m) => setSelectedMode(m)}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsCommandOpen(false);
-                    setIsShortcutsOpen(true);
-                  }}
-                  aria-label="Pintasan keyboard"
-                  className="pressable hidden sm:inline-flex items-center justify-center min-h-[32px] min-w-[32px] text-xs font-mono text-slash-steel hover:text-slash-bone transition-colors cursor-pointer"
-                >
-                  ?
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCommandOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsAuditDrawerOpen(true);
-                  }}
-                  className="pressable text-[11px] font-serif italic tracking-wide px-3.5 py-1 min-h-[44px] sm:min-h-[32px] rounded border border-slash-graphite text-slash-bone hover:border-slash-copper hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none cursor-pointer transition-colors duration-150 flex items-center"
-                >
-                  Jejak Audit
-                </button>
-              </nav>
-            </div>
-          </header>
-
-          {/* ── Main content ── */}
-
-          <main className="page-fade-in max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 pt-11 pb-24 w-full flex-1 flex flex-col">
-            <div className="max-w-[1140px] mx-auto w-full flex flex-col gap-10">
-              <div className="border-b border-slash-graphite/60 pb-5">
-                <h1 className="font-serif text-2xl sm:text-[27px] text-slash-paper font-medium italic tracking-tight pb-1">
-                  Aktivitas Broker &amp; Kepemilikan Publik
-                </h1>
-              </div>
-
-              <div className="w-full">
-                <TickerSearch
-                  onInvestigate={handleInvestigate}
-                  isLoading={isLoading}
-                  initialTicker={ticker}
-                  onOpenCommandDialog={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsCommandOpen(true);
-                  }}
-                />
-              </div>
-
-              {isLoading && (
-                <div aria-live="polite" aria-label="Pemeriksaan berjalan">
-                  {liveSteps ? (
-                    <StepsTimeline steps={liveSteps} />
-                  ) : (
-                    <div className="space-y-2" aria-hidden="true">
-                      <div className="skeleton h-4 w-32" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full hidden sm:block" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!result && !isLoading && (
-                <div className="border border-slash-graphite rounded-lg p-8 sm:p-10 text-center flex flex-col items-center justify-center gap-3 bg-slash-carbon/30">
-                  <p className="text-sm font-sans font-medium text-slash-paper">
-                    Pemeriksaan Aliran Broker &amp; Free Float BEI
-                  </p>
-                  <p className="text-sm text-slash-mist font-serif max-w-[50ch] leading-relaxed">
-                    Ketik kode efek IDX untuk menganalisis konsentrasi sekuritas pembeli/penjual terbesar serta rasio kepemilikan publik.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleInvestigate('BBCA')}
-                    className="pressable mt-2 px-4 py-2 rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-xs font-medium cursor-pointer transition-colors duration-150"
-                  >
-                    Periksa contoh: BBCA
-                  </button>
-                </div>
-              )}
-
-              {result && !isLoading && (
-                <>
-                  {hasEmptyOrError ? (
-                    <EmptyState
-                      ticker={result.ticker}
-                      errorMessage={result.error?.message}
-                      steps={result.steps}
-                      onReset={() => {
-                        setResult(null);
-                        setLiveSteps(null);
-                      }}
-                      onTryBBCA={() => handleInvestigate('BBCA')}
-                    />
-                  ) : (
-                    <div className="result-enter flex flex-col gap-8">
-                      <StepsTimeline steps={result.steps} />
-                      <BrokerAnalysisView
-                        topBuyers={buyers}
-                        topSellers={sellers}
-                      />
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-5 flex flex-col">
-                          <FreeFloatCard data={result.free_float} className="h-full" />
-                        </div>
-                        <div className="lg:col-span-7 flex flex-col">
-                          <NarrativePanel
-                            narrative={result.narrative}
-                            ticker={result.ticker}
-                            className="h-full"
-                            onCopySuccess={() => setToastMessage(COPY.toast_copied)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </main>
-
-          {/* ── Footer ── */}
-          <footer className="border-t border-slash-graphite mt-auto">
-            <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-3 text-xs">
-              <span className="font-serif text-base tracking-tight text-slash-paper italic select-none shrink-0">
-                Aegis <span className="not-italic text-xs font-serif font-medium text-slash-copper">IDX</span>
-              </span>
-              <span className="hidden sm:inline w-px h-3.5 bg-slash-slate" aria-hidden="true" />
-              <p className="text-xs text-slash-mist font-serif italic m-0">
-                Bukan rekomendasi investasi.
-              </p>
-            </div>
-          </footer>
-
-          <TickerCommandDialog
-            isOpen={isCommandOpen}
-            onClose={() => setIsCommandOpen(false)}
-            onSelectTicker={(selected) => {
-              setTicker(selected);
-              handleInvestigate(selected);
-            }}
-            currentTicker={ticker}
-          />
-          <AuditDrawer
-            isOpen={isAuditDrawerOpen}
-            onClose={() => setIsAuditDrawerOpen(false)}
-            result={result}
-            selectedMode={selectedMode}
-          />
-          <KeyboardShortcutsModal
-            isOpen={isShortcutsOpen}
-            onClose={() => setIsShortcutsOpen(false)}
-          />
-          {toastMessage && (
-            <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-          )}
-        </div>
-      </div>
-      {/* Variants: insert below this line */}
-      <style data-impeccable-css="1c0441a2">{`
-        @scope ([data-impeccable-variant="1"]) {
-          :scope > .fix-v1 {
-            font-size: 15px;
-            color: var(--color-slash-bone);
-          }
-          :scope > .fix-v1 p {
-            font-size: 14px;
-            line-height: 1.6;
-          }
-          :scope > .fix-v1 .text-slash-fog,
-          :scope > .fix-v1 .text-slash-steel {
-            color: var(--color-slash-mist) !important;
-          }
-          :scope > .fix-v1 header {
-            border-bottom-color: color-mix(in srgb, var(--color-slash-copper) calc(var(--p-color-amount, 0.5) * 50%), var(--color-slash-graphite));
-          }
-        }
-        @scope ([data-impeccable-variant="2"]) {
-          :scope > .fix-v2 {
-            font-size: 15px;
-          }
-          :scope > .fix-v2 p {
-            font-size: 14px;
-          }
-          :scope > .fix-v2 .text-slash-fog,
-          :scope > .fix-v2 .text-slash-steel {
-            color: #b0b4c3 !important;
-          }
-          :scope > .fix-v2 header {
-            border-bottom-color: color-mix(in srgb, #10b981 calc(var(--p-color-amount, 0.5) * 40%), var(--color-slash-graphite));
-          }
-        }
-        @scope ([data-impeccable-variant="3"]) {
-          :scope > .fix-v3 {
-            font-size: 16px;
-          }
-          :scope > .fix-v3 p {
-            font-size: 15px;
-            line-height: 1.65;
-          }
-          :scope > .fix-v3 .text-slash-fog {
-            color: var(--color-slash-mist) !important;
-          }
-          :scope > .fix-v3 header {
-            border-bottom-color: color-mix(in srgb, var(--color-slash-gilded) calc(var(--p-color-amount, 0.5) * 60%), var(--color-slash-graphite));
-          }
-        }
-      `}</style>
-      <div data-impeccable-variant="1" data-impeccable-params='[{"id":"color-amount","kind":"range","min":0,"max":1,"step":0.05,"default":0.5,"label":"Color amount"}]'>
-        <div className="fix-v1 min-h-[100dvh] flex flex-col bg-slash-obsidian text-slash-bone">
-          <header className="border-b border-slash-graphite bg-slash-onyx sticky top-0 z-40">
-            <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 min-h-14 py-2.5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 shrink-0 select-none">
-                <span className="font-sans text-sm font-bold tracking-[0.08em] uppercase text-slash-paper">
-                  Aegis
-                </span>
-                <span className="text-slash-copper font-mono text-[11px] font-semibold border border-slash-graphite px-1.5 py-0.5 rounded">
-                  IDX
-                </span>
-              </div>
-              <div className="hidden md:flex items-center opacity-85">
-                <MarketStatusBar />
-              </div>
-              <nav aria-label="Mode dan jejak" className="flex items-center gap-3 shrink-0">
-                <div className="md:hidden">
-                  <MarketStatusBar />
-                </div>
-                <ModeBadge
-                  mode={selectedMode}
-                  creditEstimate={result?.credit_estimate}
-                  interactive={!isLoading}
-                  onModeChange={(m) => setSelectedMode(m)}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsCommandOpen(false);
-                    setIsShortcutsOpen(true);
-                  }}
-                  aria-label="Pintasan keyboard"
-                  className="pressable hidden sm:inline-flex items-center justify-center min-h-[32px] min-w-[32px] text-xs font-mono text-slash-steel hover:text-slash-bone transition-colors cursor-pointer"
-                >
-                  ?
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCommandOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsAuditDrawerOpen(true);
-                  }}
-                  className="pressable text-[11px] font-serif italic tracking-wide px-3.5 py-1 min-h-[44px] sm:min-h-[32px] rounded border border-slash-graphite text-slash-bone hover:border-slash-copper hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none cursor-pointer transition-colors duration-150 flex items-center"
-                >
-                  Jejak Audit
-                </button>
-              </nav>
-            </div>
-          </header>
-
-          <main className="page-fade-in max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 pt-11 pb-24 w-full flex-1 flex flex-col">
-            <div className="max-w-[1140px] mx-auto w-full flex flex-col gap-10">
-              <div className="border-b border-slash-graphite/60 pb-5">
-                <h1 className="font-serif text-2xl sm:text-[27px] text-slash-paper font-medium italic tracking-tight pb-1">
-                  Aktivitas Broker &amp; Kepemilikan Publik
-                </h1>
-              </div>
-
-              <div className="w-full">
-                <TickerSearch
-                  onInvestigate={handleInvestigate}
-                  isLoading={isLoading}
-                  initialTicker={ticker}
-                  onOpenCommandDialog={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsCommandOpen(true);
-                  }}
-                />
-              </div>
-
-              {isLoading && (
-                <div aria-live="polite" aria-label="Pemeriksaan berjalan">
-                  {liveSteps ? (
-                    <StepsTimeline steps={liveSteps} />
-                  ) : (
-                    <div className="space-y-2" aria-hidden="true">
-                      <div className="skeleton h-4 w-32" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full hidden sm:block" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!result && !isLoading && (
-                <div className="border border-slash-graphite rounded-lg p-8 sm:p-10 text-center flex flex-col items-center justify-center gap-3 bg-slash-carbon/30">
-                  <p className="text-base font-sans font-medium text-slash-paper">
-                    Pemeriksaan Aliran Broker &amp; Free Float BEI
-                  </p>
-                  <p className="text-sm text-slash-mist font-serif max-w-[50ch] leading-relaxed">
-                    Ketik kode efek IDX untuk menganalisis konsentrasi sekuritas pembeli/penjual terbesar serta rasio kepemilikan publik.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleInvestigate('BBCA')}
-                    className="pressable mt-2 px-4 py-2 rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-xs font-medium cursor-pointer transition-colors duration-150"
-                  >
-                    Periksa contoh: BBCA
-                  </button>
-                </div>
-              )}
-
-              {result && !isLoading && (
-                <>
-                  {hasEmptyOrError ? (
-                    <EmptyState
-                      ticker={result.ticker}
-                      errorMessage={result.error?.message}
-                      steps={result.steps}
-                      onReset={() => {
-                        setResult(null);
-                        setLiveSteps(null);
-                      }}
-                      onTryBBCA={() => handleInvestigate('BBCA')}
-                    />
-                  ) : (
-                    <div className="result-enter flex flex-col gap-8">
-                      <StepsTimeline steps={result.steps} />
-                      <BrokerAnalysisView
-                        topBuyers={buyers}
-                        topSellers={sellers}
-                      />
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-5 flex flex-col">
-                          <FreeFloatCard data={result.free_float} className="h-full" />
-                        </div>
-                        <div className="lg:col-span-7 flex flex-col">
-                          <NarrativePanel
-                            narrative={result.narrative}
-                            ticker={result.ticker}
-                            className="h-full"
-                            onCopySuccess={() => setToastMessage(COPY.toast_copied)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </main>
-
-          <footer className="border-t border-slash-graphite mt-auto">
-            <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-3 text-xs">
-              <span className="font-serif text-base tracking-tight text-slash-paper italic select-none shrink-0">
-                Aegis <span className="not-italic text-xs font-serif font-medium text-slash-copper">IDX</span>
-              </span>
-              <span className="hidden sm:inline w-px h-3.5 bg-slash-slate" aria-hidden="true" />
-              <p className="text-xs text-slash-mist font-serif italic m-0">
-                Bukan rekomendasi investasi.
-              </p>
-            </div>
-          </footer>
-
-          <TickerCommandDialog
-            isOpen={isCommandOpen}
-            onClose={() => setIsCommandOpen(false)}
-            onSelectTicker={(selected) => {
-              setTicker(selected);
-              handleInvestigate(selected);
-            }}
-            currentTicker={ticker}
-          />
-          <AuditDrawer
-            isOpen={isAuditDrawerOpen}
-            onClose={() => setIsAuditDrawerOpen(false)}
-            result={result}
-            selectedMode={selectedMode}
-          />
-          <KeyboardShortcutsModal
-            isOpen={isShortcutsOpen}
-            onClose={() => setIsShortcutsOpen(false)}
-          />
-          {toastMessage && (
-            <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-          )}
-        </div>
-      </div>
-
-      <div data-impeccable-variant="2" data-impeccable-params='[{"id":"color-amount","kind":"range","min":0,"max":1,"step":0.05,"default":0.5,"label":"Color amount"}]' style={{ display: 'none' }}>
-        <div className="fix-v2 min-h-[100dvh] flex flex-col bg-slash-obsidian text-slash-bone">
-          <header className="border-b border-slash-graphite bg-slash-onyx sticky top-0 z-40">
-            <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 min-h-14 py-2.5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 shrink-0 select-none">
-                <span className="font-sans text-sm font-bold tracking-[0.08em] uppercase text-slash-paper">
-                  Aegis
-                </span>
-                <span className="text-emerald-400 font-mono text-[11px] font-semibold border border-slash-graphite px-1.5 py-0.5 rounded">
-                  IDX
-                </span>
-              </div>
-              <div className="hidden md:flex items-center opacity-85">
-                <MarketStatusBar />
-              </div>
-              <nav aria-label="Mode dan jejak" className="flex items-center gap-3 shrink-0">
-                <div className="md:hidden">
-                  <MarketStatusBar />
-                </div>
-                <ModeBadge
-                  mode={selectedMode}
-                  creditEstimate={result?.credit_estimate}
-                  interactive={!isLoading}
-                  onModeChange={(m) => setSelectedMode(m)}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsCommandOpen(false);
-                    setIsShortcutsOpen(true);
-                  }}
-                  aria-label="Pintasan keyboard"
-                  className="pressable hidden sm:inline-flex items-center justify-center min-h-[32px] min-w-[32px] text-xs font-mono text-slash-steel hover:text-slash-bone transition-colors cursor-pointer"
-                >
-                  ?
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsCommandOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsAuditDrawerOpen(true);
-                  }}
-                  className="pressable text-[11px] font-serif italic tracking-wide px-3.5 py-1 min-h-[44px] sm:min-h-[32px] rounded border border-slash-graphite text-slash-bone hover:border-slash-copper hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none cursor-pointer transition-colors duration-150 flex items-center"
-                >
-                  Jejak Audit
-                </button>
-              </nav>
-            </div>
-          </header>
-
-          <main className="page-fade-in max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 pt-11 pb-24 w-full flex-1 flex flex-col">
-            <div className="max-w-[1140px] mx-auto w-full flex flex-col gap-10">
-              <div className="border-b border-slash-graphite/60 pb-5">
-                <h1 className="font-serif text-2xl sm:text-[27px] text-slash-paper font-medium italic tracking-tight pb-1">
-                  Aktivitas Broker &amp; Kepemilikan Publik
-                </h1>
-              </div>
-
-              <div className="w-full">
-                <TickerSearch
-                  onInvestigate={handleInvestigate}
-                  isLoading={isLoading}
-                  initialTicker={ticker}
-                  onOpenCommandDialog={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsCommandOpen(true);
-                  }}
-                />
-              </div>
-
-              {isLoading && (
-                <div aria-live="polite" aria-label="Pemeriksaan berjalan">
-                  {liveSteps ? (
-                    <StepsTimeline steps={liveSteps} />
-                  ) : (
-                    <div className="space-y-2" aria-hidden="true">
-                      <div className="skeleton h-4 w-32" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full hidden sm:block" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!result && !isLoading && (
-                <div className="border border-slash-graphite rounded-lg p-8 sm:p-10 text-center flex flex-col items-center justify-center gap-3 bg-slash-carbon/30">
-                  <p className="text-base font-sans font-medium text-slash-paper">
-                    Pemeriksaan Aliran Broker &amp; Free Float BEI
-                  </p>
-                  <p className="text-sm text-slash-mist font-serif max-w-[50ch] leading-relaxed">
-                    Ketik kode efek IDX untuk menganalisis konsentrasi sekuritas pembeli/penjual terbesar serta rasio kepemilikan publik.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleInvestigate('BBCA')}
-                    className="pressable mt-2 px-4 py-2 rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-xs font-medium cursor-pointer transition-colors duration-150"
-                  >
-                    Periksa contoh: BBCA
-                  </button>
-                </div>
-              )}
-
-              {result && !isLoading && (
-                <>
-                  {hasEmptyOrError ? (
-                    <EmptyState
-                      ticker={result.ticker}
-                      errorMessage={result.error?.message}
-                      steps={result.steps}
-                      onReset={() => {
-                        setResult(null);
-                        setLiveSteps(null);
-                      }}
-                      onTryBBCA={() => handleInvestigate('BBCA')}
-                    />
-                  ) : (
-                    <div className="result-enter flex flex-col gap-8">
-                      <StepsTimeline steps={result.steps} />
-                      <BrokerAnalysisView
-                        topBuyers={buyers}
-                        topSellers={sellers}
-                      />
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-5 flex flex-col">
-                          <FreeFloatCard data={result.free_float} className="h-full" />
-                        </div>
-                        <div className="lg:col-span-7 flex flex-col">
-                          <NarrativePanel
-                            narrative={result.narrative}
-                            ticker={result.ticker}
-                            className="h-full"
-                            onCopySuccess={() => setToastMessage(COPY.toast_copied)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </main>
-
-          <footer className="border-t border-slash-graphite mt-auto">
-            <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-3 text-xs">
-              <span className="font-serif text-base tracking-tight text-slash-paper italic select-none shrink-0">
-                Aegis <span className="not-italic text-xs font-serif font-medium text-slash-copper">IDX</span>
-              </span>
-              <span className="hidden sm:inline w-px h-3.5 bg-slash-slate" aria-hidden="true" />
-              <p className="text-xs text-slash-mist font-serif italic m-0">
-                Bukan rekomendasi investasi.
-              </p>
-            </div>
-          </footer>
-
-          <TickerCommandDialog
-            isOpen={isCommandOpen}
-            onClose={() => setIsCommandOpen(false)}
-            onSelectTicker={(selected) => {
-              setTicker(selected);
-              handleInvestigate(selected);
-            }}
-            currentTicker={ticker}
-          />
-          <AuditDrawer
-            isOpen={isAuditDrawerOpen}
-            onClose={() => setIsAuditDrawerOpen(false)}
-            result={result}
-            selectedMode={selectedMode}
-          />
-          <KeyboardShortcutsModal
-            isOpen={isShortcutsOpen}
-            onClose={() => setIsShortcutsOpen(false)}
-          />
-          {toastMessage && (
-            <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-          )}
-        </div>
-      </div>
-
-      <div data-impeccable-variant="3" data-impeccable-params='[{"id":"color-amount","kind":"range","min":0,"max":1,"step":0.05,"default":0.5,"label":"Color amount"}]' style={{ display: 'none' }}>
-        <div className="fix-v3 min-h-[100dvh] flex flex-col bg-slash-obsidian text-slash-bone">
-          <header className="border-b border-slash-graphite bg-slash-onyx sticky top-0 z-40">
+    <div className="page-root-v3 min-h-[100dvh] flex flex-col bg-slash-obsidian text-slash-bone">
+      <header className="border-b border-slash-graphite bg-slash-onyx sticky top-0 z-40">
             <div className="max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 min-h-14 py-2.5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 shrink-0 select-none">
                 <span className="font-sans text-sm font-bold tracking-[0.08em] uppercase text-slash-paper">
@@ -768,96 +162,96 @@ export default function HomePage() {
 
           <main className="page-fade-in max-w-[1216px] mx-auto px-4 sm:px-6 lg:px-8 pt-11 pb-24 w-full flex-1 flex flex-col">
             <div className="max-w-[1140px] mx-auto w-full flex flex-col gap-10">
-              <div className="border-b border-slash-graphite/60 pb-5">
-                <h1 className="font-serif text-2xl sm:text-[27px] text-slash-paper font-medium italic tracking-tight pb-1">
-                  Aktivitas Broker &amp; Kepemilikan Publik
-                </h1>
-              </div>
+                  <div className="border-b border-slash-graphite/60 pb-5">
+                    <h1 className="font-serif text-2xl sm:text-[27px] text-slash-paper font-medium italic tracking-tight pb-1">
+                      Aktivitas Broker &amp; Kepemilikan Publik
+                    </h1>
+                  </div>
 
-              <div className="w-full">
-                <TickerSearch
-                  onInvestigate={handleInvestigate}
-                  isLoading={isLoading}
-                  initialTicker={ticker}
-                  onOpenCommandDialog={() => {
-                    setIsAuditDrawerOpen(false);
-                    setIsShortcutsOpen(false);
-                    setIsCommandOpen(true);
-                  }}
-                />
-              </div>
-
-              {isLoading && (
-                <div aria-live="polite" aria-label="Pemeriksaan berjalan">
-                  {liveSteps ? (
-                    <StepsTimeline steps={liveSteps} />
-                  ) : (
-                    <div className="space-y-2" aria-hidden="true">
-                      <div className="skeleton h-4 w-32" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full" />
-                      <div className="skeleton h-10 w-full hidden sm:block" />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {!result && !isLoading && (
-                <div className="border border-slash-graphite rounded-lg p-8 sm:p-10 text-center flex flex-col items-center justify-center gap-3 bg-slash-carbon/30">
-                  <p className="text-base font-sans font-medium text-slash-paper">
-                    Pemeriksaan Aliran Broker &amp; Free Float BEI
-                  </p>
-                  <p className="text-sm text-slash-mist font-serif max-w-[50ch] leading-relaxed">
-                    Ketik kode efek IDX untuk menganalisis konsentrasi sekuritas pembeli/penjual terbesar serta rasio kepemilikan publik.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleInvestigate('BBCA')}
-                    className="pressable mt-2 px-4 py-2 rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-xs font-medium cursor-pointer transition-colors duration-150"
-                  >
-                    Periksa contoh: BBCA
-                  </button>
-                </div>
-              )}
-
-              {result && !isLoading && (
-                <>
-                  {hasEmptyOrError ? (
-                    <EmptyState
-                      ticker={result.ticker}
-                      errorMessage={result.error?.message}
-                      steps={result.steps}
-                      onReset={() => {
-                        setResult(null);
-                        setLiveSteps(null);
+                  <div className="w-full">
+                    <TickerSearch
+                      onInvestigate={handleInvestigate}
+                      isLoading={isLoading}
+                      initialTicker={ticker}
+                      onOpenCommandDialog={() => {
+                        setIsAuditDrawerOpen(false);
+                        setIsShortcutsOpen(false);
+                        setIsCommandOpen(true);
                       }}
-                      onTryBBCA={() => handleInvestigate('BBCA')}
                     />
-                  ) : (
-                    <div className="result-enter flex flex-col gap-8">
-                      <StepsTimeline steps={result.steps} />
-                      <BrokerAnalysisView
-                        topBuyers={buyers}
-                        topSellers={sellers}
-                      />
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <div className="lg:col-span-5 flex flex-col">
-                          <FreeFloatCard data={result.free_float} className="h-full" />
+                  </div>
+
+                  {isLoading && (
+                    <div aria-live="polite" aria-label="Pemeriksaan berjalan">
+                      {liveSteps ? (
+                        <StepsTimeline steps={liveSteps} />
+                      ) : (
+                        <div className="space-y-2" aria-hidden="true">
+                          <div className="skeleton h-4 w-32" />
+                          <div className="skeleton h-10 w-full" />
+                          <div className="skeleton h-10 w-full" />
+                          <div className="skeleton h-10 w-full hidden sm:block" />
                         </div>
-                        <div className="lg:col-span-7 flex flex-col">
-                          <NarrativePanel
-                            narrative={result.narrative}
-                            ticker={result.ticker}
-                            className="h-full"
-                            onCopySuccess={() => setToastMessage(COPY.toast_copied)}
-                          />
-                        </div>
-                      </div>
+                      )}
                     </div>
                   )}
-                </>
-              )}
-            </div>
+
+                  {!result && !isLoading && (
+                    <div className="border border-slash-graphite rounded-lg p-8 sm:p-10 text-center flex flex-col items-center justify-center gap-3 bg-slash-carbon/30">
+                      <p className="text-base font-sans font-medium text-slash-paper">
+                        Pemeriksaan Aliran Broker &amp; Free Float BEI
+                      </p>
+                      <p className="text-sm text-slash-mist font-serif max-w-[50ch] leading-relaxed">
+                        Ketik kode efek IDX untuk menganalisis konsentrasi sekuritas pembeli/penjual terbesar serta rasio kepemilikan publik.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleInvestigate('BBCA')}
+                        className="pressable mt-2 px-4 py-2 rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-xs font-medium cursor-pointer transition-colors duration-150"
+                      >
+                        Periksa contoh: BBCA
+                      </button>
+                    </div>
+                  )}
+
+                  {result && !isLoading && (
+                    <>
+                      {hasEmptyOrError ? (
+                        <EmptyState
+                          ticker={result.ticker}
+                          errorMessage={result.error?.message}
+                          steps={result.steps}
+                          onReset={() => {
+                            setResult(null);
+                            setLiveSteps(null);
+                          }}
+                          onTryBBCA={() => handleInvestigate('BBCA')}
+                        />
+                      ) : (
+                        <div className="result-enter flex flex-col gap-8">
+                          <StepsTimeline steps={result.steps} />
+                          <BrokerAnalysisView
+                            topBuyers={buyers}
+                            topSellers={sellers}
+                          />
+                          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div className="lg:col-span-5 flex flex-col">
+                              <FreeFloatCard data={result.free_float} className="h-full" />
+                            </div>
+                            <div className="lg:col-span-7 flex flex-col">
+                              <NarrativePanel
+                                narrative={result.narrative}
+                                ticker={result.ticker}
+                                className="h-full"
+                                onCopySuccess={() => setToastMessage(COPY.toast_copied)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
           </main>
 
           <footer className="border-t border-slash-graphite mt-auto">
@@ -894,11 +288,6 @@ export default function HomePage() {
           {toastMessage && (
             <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
           )}
-        </div>
-      </div>
-      {/* impeccable-variants-end 1c0441a2 */}
     </div>
-
-
   );
 }

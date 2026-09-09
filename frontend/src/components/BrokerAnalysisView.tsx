@@ -103,10 +103,10 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
       role="tab"
       aria-selected={viewMode === id}
       onClick={() => setViewMode(id)}
-      className={`pressable px-3.5 py-1.5 min-h-[44px] sm:min-h-[32px] rounded-md font-sans text-[12px] cursor-pointer transition-colors duration-150 ${
+      className={`pressable px-3 sm:px-3.5 py-1.5 min-h-[36px] sm:min-h-[32px] rounded-md font-sans text-xs cursor-pointer transition-colors duration-150 whitespace-nowrap inline-flex items-center justify-center ${
         viewMode === id
-          ? 'bg-slash-paper text-slash-obsidian font-medium'
-          : 'text-slash-fog hover:text-slash-paper'
+          ? 'bg-slash-paper text-slash-obsidian font-semibold shadow-xs'
+          : 'text-slash-fog hover:text-slash-paper hover:bg-slash-carbon/50'
       }`}
     >
       {label}
@@ -116,21 +116,29 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
   const renderBrokerTable = (type: 'buyers' | 'sellers', data: BrokerRow[], maxVal: number) => {
     const isBuyers = type === 'buyers';
     const showFullColumns = viewMode !== 'split';
+    const netColWidth = showFullColumns
+      ? (useCompact ? 'w-28 sm:w-36' : 'w-40 sm:w-48')
+      : (useCompact ? 'w-28 sm:w-36' : 'w-44 sm:w-52');
+    const buySellColWidth = useCompact ? 'w-24 sm:w-28' : 'w-36 sm:w-44';
+    const tableMinWidth = showFullColumns
+      ? (useCompact ? 'min-w-[560px]' : 'min-w-[760px]')
+      : (useCompact ? 'min-w-[360px]' : 'min-w-[460px]');
 
     return (
-      <div className="border border-slash-graphite rounded-lg flex flex-col overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-slash-graphite flex items-baseline justify-between gap-2">
-          <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">
+      <div className="border border-slash-graphite rounded-lg flex flex-col overflow-hidden bg-slash-obsidian">
+        <div className="px-3.5 sm:px-4 py-3 border-b border-slash-graphite flex items-center justify-between gap-3 bg-slash-onyx/40">
+          <h3 className="text-xs sm:text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em] whitespace-nowrap truncate">
             {isBuyers ? COPY.buyers_title : COPY.sellers_title}
           </h3>
-          <span className="font-mono-numbers text-[11px] text-slash-mist">
-            3 besar {isBuyers ? cr3BuyersPercent : cr3SellersPercent}%
+          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-slash-mist bg-slash-carbon px-2 py-0.5 rounded border border-slash-graphite/60 whitespace-nowrap shrink-0">
+            <span className="text-slash-fog font-sans text-[10px]">Top 3:</span>
+            <span className="font-semibold text-slash-paper">{isBuyers ? cr3BuyersPercent : cr3SellersPercent}%</span>
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table
-            className="w-full text-left border-collapse text-xs table-fixed"
+            className={`w-full text-left border-collapse text-xs table-fixed ${tableMinWidth}`}
             aria-label={isBuyers ? 'Pembeli bersih' : 'Penjual bersih'}
           >
             <thead>
@@ -139,11 +147,11 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                 <th scope="col" className="py-2.5 px-2 sm:px-3.5">Sekuritas</th>
                 {showFullColumns && (
                   <>
-                    <th scope="col" className="py-2.5 px-2 sm:px-3 text-right w-24 sm:w-28">Beli</th>
-                    <th scope="col" className="py-2.5 px-2 sm:px-3 text-right w-24 sm:w-28">Jual</th>
+                    <th scope="col" className={`py-2.5 px-2 sm:px-3 text-right ${buySellColWidth}`}>Beli</th>
+                    <th scope="col" className={`py-2.5 px-2 sm:px-3 text-right ${buySellColWidth}`}>Jual</th>
                   </>
                 )}
-                <th scope="col" className="py-2.5 px-2 sm:px-3.5 text-right w-28 sm:w-36">Net</th>
+                <th scope="col" className={`py-2.5 px-2.5 sm:px-3.5 text-right ${netColWidth}`}>Net</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slash-graphite/50 font-mono-numbers">
@@ -169,10 +177,10 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                   return (
                     <React.Fragment key={`${type}-${rowKey}`}>
                       <tr className="row-hover">
-                        <td className="py-3 px-2 sm:px-3.5 text-center text-slash-steel font-mono text-[11px] align-top">
+                        <td className="py-3 px-2 sm:px-3.5 text-center text-slash-steel font-mono text-[11px] align-middle">
                           {row.rank}
                         </td>
-                        <td className="py-3 px-2 sm:px-3.5 min-w-0 align-top">
+                        <td className="py-3 px-2 sm:px-3.5 min-w-0 align-middle">
                           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                             <span
                               className={`font-sans text-[10px] sm:text-[11px] shrink-0 ${
@@ -209,45 +217,55 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                             </button>
                           </div>
                           {isExpanded && (
-                            <dl className={`${showFullColumns ? 'sm:hidden' : ''} mt-2.5 space-y-1.5 text-[11px] font-mono-numbers border-t border-slash-graphite/50 pt-2.5`}>
-                              <div className="flex justify-between">
+                            <dl className={`${showFullColumns ? 'sm:hidden' : ''} mt-2.5 space-y-1.5 text-xs font-mono border-t border-slash-graphite/50 pt-2.5`}>
+                              <div className="flex justify-between items-center">
                                 <dt className="text-slash-fog font-sans">{COPY.buy_label}</dt>
-                                <dd className="text-slash-mist">{formatIDR(row.buy_value, useCompact)}</dd>
+                                <dd className="text-slash-mist font-mono tabular-nums">{formatIDR(row.buy_value, useCompact)}</dd>
                               </div>
-                              <div className="flex justify-between">
+                              <div className="flex justify-between items-center">
                                 <dt className="text-slash-fog font-sans">{COPY.sell_label}</dt>
-                                <dd className="text-slash-mist">{formatIDR(row.sell_value, useCompact)}</dd>
+                                <dd className="text-slash-mist font-mono tabular-nums">{formatIDR(row.sell_value, useCompact)}</dd>
                               </div>
                             </dl>
                           )}
                         </td>
                         {showFullColumns && (
                           <>
-                            <td className="py-3 px-2 sm:px-3 text-right text-slash-mist align-top whitespace-nowrap">
+                            <td className={`py-3 px-2 sm:px-3 text-right text-slash-mist align-middle whitespace-nowrap font-mono tabular-nums ${
+                              useCompact ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-[13px] tracking-tight'
+                            }`}>
                               {formatIDR(row.buy_value, useCompact)}
                             </td>
-                            <td className="py-3 px-2 sm:px-3 text-right text-slash-mist align-top whitespace-nowrap">
+                            <td className={`py-3 px-2 sm:px-3 text-right text-slash-mist align-middle whitespace-nowrap font-mono tabular-nums ${
+                              useCompact ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-[13px] tracking-tight'
+                            }`}>
                               {formatIDR(row.sell_value, useCompact)}
                             </td>
                           </>
                         )}
-                        <td className="py-3 px-2 sm:px-3.5 text-right relative align-top whitespace-nowrap">
-                          <div
-                            className={`absolute bottom-1.5 right-2 sm:right-3.5 h-1 rounded-xs ${
-                              isPositive ? 'bg-trade-buy/50' : 'bg-trade-sell/50'
-                            }`}
-                            style={{ width: `${concentrationPercent}%`, maxWidth: '75px' }}
-                            aria-hidden="true"
-                            title={`${concentrationPercent}% dari nilai terbesar`}
-                          />
-                          <span
-                            className={`font-mono text-xs sm:text-sm font-medium tabular-nums ${
-                              isPositive ? 'text-trade-buy' : 'text-trade-sell'
-                            }`}
-                          >
-                            <span className="sr-only">{COPY.net_label}: </span>
-                            {formatIDR(row.net_value, useCompact)}
-                          </span>
+                        <td className="py-3 px-2.5 sm:px-3.5 text-right align-middle whitespace-nowrap">
+                          <div className="inline-flex flex-col items-end gap-1">
+                            <span
+                              className={`font-mono font-medium tabular-nums ${
+                                useCompact ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-[13px] tracking-tight font-semibold'
+                              } ${isPositive ? 'text-trade-buy' : 'text-trade-sell'}`}
+                            >
+                              <span className="sr-only">{COPY.net_label}: </span>
+                              {formatIDR(row.net_value, useCompact)}
+                            </span>
+                            <div
+                              className="w-16 sm:w-20 bg-slash-graphite/40 h-1 rounded-full overflow-hidden"
+                              aria-hidden="true"
+                              title={`${concentrationPercent}% dari nilai terbesar`}
+                            >
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  isPositive ? 'bg-trade-buy' : 'bg-trade-sell'
+                                }`}
+                                style={{ width: `${concentrationPercent}%` }}
+                              />
+                            </div>
+                          </div>
                         </td>
                       </tr>
                     </React.Fragment>
@@ -265,46 +283,69 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
     <section aria-label="Aliran broker" className={`space-y-5 ${className}`}>
       <p className="text-sm text-slash-mist font-serif leading-relaxed">{COPY.broker_section_hint}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1" role="tablist" aria-label="Tampilan tabel">
+        <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Tampilan tabel">
           {tabBtn('split', 'Beli & jual')}
           {tabBtn('buyers', 'Pembeli')}
           {tabBtn('sellers', 'Penjual')}
           {tabBtn('matrix', 'Konsentrasi')}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setUseCompact(!useCompact)}
-          aria-pressed={useCompact}
-          title={useCompact ? 'Tampilkan angka lengkap, contoh Rp 1.250.000.000' : 'Tampilkan angka ringkas, contoh Rp 1,25 M'}
-          className="pressable text-[11px] font-sans px-3 py-1.5 min-h-[44px] sm:min-h-[32px] rounded-md border border-slash-graphite text-slash-mist hover:text-slash-paper hover:border-slash-slate focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none cursor-pointer transition-colors duration-150"
+        <div
+          className="inline-flex items-center p-1 rounded-lg bg-slash-carbon border border-slash-graphite shrink-0"
+          role="group"
+          aria-label="Format angka"
         >
-          {useCompact ? 'Angka ringkas' : 'Angka lengkap'}
-        </button>
+          <button
+            type="button"
+            onClick={() => setUseCompact(true)}
+            aria-pressed={useCompact}
+            title="Tampilkan angka ringkas, contoh Rp 125,0 M"
+            className={`pressable px-3 py-1.5 min-h-[32px] sm:min-h-[28px] rounded-md font-sans text-xs font-medium cursor-pointer transition-all duration-150 whitespace-nowrap inline-flex items-center gap-1.5 ${
+              useCompact
+                ? 'bg-slash-graphite text-slash-paper shadow-xs font-semibold'
+                : 'text-slash-fog hover:text-slash-paper'
+            }`}
+          >
+            <span>Angka ringkas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setUseCompact(false)}
+            aria-pressed={!useCompact}
+            title="Tampilkan angka lengkap, contoh Rp 125.000.000.000"
+            className={`pressable px-3 py-1.5 min-h-[32px] sm:min-h-[28px] rounded-md font-sans text-xs font-medium cursor-pointer transition-all duration-150 whitespace-nowrap inline-flex items-center gap-1.5 ${
+              !useCompact
+                ? 'bg-slash-graphite text-slash-paper shadow-xs font-semibold'
+                : 'text-slash-fog hover:text-slash-paper'
+            }`}
+          >
+            <span>Angka lengkap</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 py-4 border-y border-slash-graphite">
         <div>
-          <div className="text-[11px] text-slash-mist font-sans mb-1.5">{COPY.foreign_label} · neto</div>
-          <div className={`font-mono-numbers text-lg font-medium ${foreignNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'}`}>
-            {foreignNet >= 0 ? '+' : ''}{formatIDR(foreignNet, true)}
+          <div className="text-xs font-sans font-medium text-slash-mist mb-1.5">{COPY.foreign_label} · neto</div>
+          <div className={`font-mono text-base sm:text-lg font-medium tabular-nums tracking-tight ${foreignNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'}`}>
+            {foreignNet >= 0 ? '+' : ''}{formatIDR(foreignNet, useCompact)}
           </div>
         </div>
         <div>
-          <div className="text-[11px] text-slash-mist font-sans mb-1.5">{COPY.domestic_label} · neto</div>
-          <div className={`font-mono-numbers text-lg font-medium ${domesticNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'}`}>
-            {domesticNet >= 0 ? '+' : ''}{formatIDR(domesticNet, true)}
+          <div className="text-xs font-sans font-medium text-slash-mist mb-1.5">{COPY.domestic_label} · neto</div>
+          <div className={`font-mono text-base sm:text-lg font-medium tabular-nums tracking-tight ${domesticNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'}`}>
+            {domesticNet >= 0 ? '+' : ''}{formatIDR(domesticNet, useCompact)}
           </div>
         </div>
         <div>
-          <div className="text-[11px] text-slash-mist font-sans mb-1.5">Porsi 3 & 5 besar pembeli</div>
-          <div className="font-mono-numbers text-lg text-slash-paper">
-            {cr3BuyersPercent}% <span className="text-sm text-slash-mist">/ {cr5BuyersPercent}%</span>
+          <div className="text-xs font-sans font-medium text-slash-mist mb-1.5">Porsi 3 &amp; 5 besar pembeli</div>
+          <div className="font-mono text-xl font-medium text-slash-paper tabular-nums">
+            {cr3BuyersPercent}% <span className="text-xs text-slash-mist font-normal">/ {cr5BuyersPercent}%</span>
           </div>
-          <details className="mt-1.5 text-[11px] text-slash-fog font-sans">
-            <summary className="cursor-pointer hover:text-slash-paper min-h-[32px] inline-flex items-center">Apa artinya?</summary>
-            <p className="mt-1 leading-relaxed max-w-[65ch]">{COPY.cr_explain}</p>
+          <details className="mt-2 text-xs text-slash-mist font-sans">
+            <summary className="cursor-pointer hover:text-slash-paper text-slash-copper min-h-[32px] inline-flex items-center font-medium">Apa artinya?</summary>
+            <p className="mt-1.5 text-xs text-slash-bone leading-relaxed max-w-[65ch] bg-slash-carbon/80 p-2.5 rounded border border-slash-graphite">{COPY.cr_explain}</p>
           </details>
         </div>
       </div>

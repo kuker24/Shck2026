@@ -38,12 +38,19 @@ export default function HomePage() {
 
       if (isInputActive) return;
 
+      // Overlays are mutually exclusive, matching the button handlers below.
       if (e.key === '?') {
         e.preventDefault();
-        setIsShortcutsOpen((prev) => !prev);
+        setIsShortcutsOpen((prev) => {
+          if (!prev) setIsAuditDrawerOpen(false);
+          return !prev;
+        });
       } else if (e.key === 'o' || e.key === 'O') {
         e.preventDefault();
-        setIsAuditDrawerOpen((prev) => !prev);
+        setIsAuditDrawerOpen((prev) => {
+          if (!prev) setIsShortcutsOpen(false);
+          return !prev;
+        });
       } else if (e.key === '1') {
         e.preventDefault();
         setSelectedMode('mock');

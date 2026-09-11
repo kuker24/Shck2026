@@ -126,6 +126,9 @@ export async function runInvestigation(
 
       if (onStepProgress) onStepProgress([...stepsState]);
 
+      // Started before the cosmetic step delays so the request and the animation
+      // overlap. The delays can reject first on abort, which would leave this
+      // promise's own rejection unhandled, so it is settled into a result object.
       const fetchPromise = fetch(`${API_BASE_URL}/v1/investigate`, {
         method: 'POST',
         headers: {
@@ -136,7 +139,10 @@ export async function runInvestigation(
           mode: requestedMode,
         }),
         signal,
-      });
+      }).then(
+        (response) => ({ response, error: null as unknown }),
+        (error: unknown) => ({ response: null, error })
+      );
 
       await delay(250, signal);
       stepsState[0].status = 'done';
@@ -144,7 +150,11 @@ export async function runInvestigation(
       if (onStepProgress) onStepProgress([...stepsState]);
 
       await delay(300, signal);
-      const response = await fetchPromise;
+      const settled = await fetchPromise;
+      if (settled.error !== null || settled.response === null) {
+        throw settled.error;
+      }
+      const response = settled.response;
       if (!response.ok) {
         const errJson = await response.json().catch(() => null);
         throw new InvestigateHttpError(

@@ -1,6 +1,7 @@
 from typing import Any
 import httpx
 from ..core.config import settings
+from .errors import SectorsConfigError
 
 
 def _auth_headers(key: str) -> dict[str, str]:
@@ -26,7 +27,7 @@ async def fetch_free_float(ticker: str, api_key: str | None = None) -> dict[str,
     """Fetch free-float via company ownership Public row (Sectors v2, ~1+ credits)."""
     key = api_key or settings.SECTORS_API_KEY
     if not key:
-        raise ValueError("SECTORS_API_KEY tidak dikonfigurasi untuk pemanggilan live.")
+        raise SectorsConfigError("SECTORS_API_KEY tidak dikonfigurasi untuk pemanggilan live.")
 
     base = settings.SECTORS_BASE_URL.rstrip("/")
     if base.endswith("/v1"):
@@ -43,6 +44,7 @@ async def fetch_free_float(ticker: str, api_key: str | None = None) -> dict[str,
             resp = await client.get(url, headers=_auth_headers(key), params=params)
             if resp.status_code == 404:
                 return {
+                    "ok": True,
                     "percent": None,
                     "shares": None,
                     "as_of": None,
@@ -67,6 +69,7 @@ async def fetch_free_float(ticker: str, api_key: str | None = None) -> dict[str,
 
             if not public:
                 return {
+                    "ok": True,
                     "percent": None,
                     "shares": None,
                     "as_of": None,
@@ -81,13 +84,17 @@ async def fetch_free_float(ticker: str, api_key: str | None = None) -> dict[str,
                 shares = None
 
             return {
+                "ok": True,
                 "percent": percent,
                 "shares": shares,
                 "as_of": None,
                 "note": "Free float dari major_shareholders Public (Sectors v2 company report)",
             }
         except Exception as e:
+            # Non-blocking soft fail for free float. `ok=False` lets the loop
+            # distinguish a real failure from legitimate metadata.
             return {
+                "ok": False,
                 "percent": None,
                 "shares": None,
                 "as_of": None,

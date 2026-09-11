@@ -24,6 +24,8 @@ export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '-';
   try {
     const d = new Date(dateStr);
+    // Invalid dates do not throw; they yield NaN time and render "Invalid Date".
+    if (Number.isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'short',

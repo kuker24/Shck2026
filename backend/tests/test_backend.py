@@ -1,10 +1,13 @@
 import asyncio
 import unittest
+from unittest.mock import patch
 from starlette.testclient import TestClient
 from app.main import app
 from app.models.schemas import InvestigateRequest
+from app.agent.executor import ToolExecutionResult
 from app.agent.loop import merge_refinement_evidence, run_investigate_loop
 from app.agent.critic import Critic
+from app.security.governor import ClientGovernor
 from app.security.guardrail import sanitize_ticker, sanitize_narrative
 from app.tools.allowlist import verify_tool_allowed, ToolNotAllowedError
 from app.tools.cache import cache_put, cache_get, CacheStore
@@ -130,9 +133,6 @@ class TestAegisBackend(unittest.TestCase):
         self.assertIn("Ini bukan saran investasi", resp.disclaimer)
 
     def test_live_refinement_merges_and_reruns_critic(self):
-        from unittest.mock import patch
-        from app.agent.executor import ToolExecutionResult
-
         empty_brokers = {"top_buyers": [], "top_sellers": []}
         filled_brokers = {
             "top_buyers": [
@@ -171,6 +171,142 @@ class TestAegisBackend(unittest.TestCase):
         self.assertEqual(resp.brokers.top_buyers[0].broker_code, "YK")
         self.assertIn("Ini bukan saran investasi", resp.disclaimer)
         self.assertTrue(any("Refinement" in (s.detail or "") for s in resp.steps))
+
+    def test_cooldown_without_cache_never_calls_live(self):
+        """Cooldown must block live calls even when the cache is empty."""
+        CacheStore._cache.pop("NEWX", None)
+        CacheStore._timestamps.pop("NEWX", None)
+        calls: list[str] = []
+
+        async def fake_tool(name, args):
+            calls.append(name)
+            if name == "load_mock_payload":
+                return ToolExecutionResult(name, "done", data={"brokers": {}, "free_float": {}})
+            return ToolExecutionResult(name, "done", data={})
+
+        with patch("app.agent.loop.RateGovernor.check_and_record", return_value=9.0), patch(
+            "app.agent.loop.Executor.run_tool", side_effect=fake_tool
+        ):
+            resp = asyncio.run(run_investigate_loop(InvestigateRequest(ticker="NEWX", mode="live")))
+
+        self.assertEqual(resp.mode, "mock")
+        self.assertNotIn("fetch_broker_summary_top", calls)
+        self.assertNotIn("fetch_free_float", calls)
+        self.assertEqual(resp.credit_estimate, 0.0)
+        self.assertIsNotNone(resp.error)
+        if resp.error:
+            self.assertEqual(resp.error.code, "RATE_COOLDOWN")
+        self.assertIn("Ini bukan saran investasi", resp.disclaimer)
+
+    def test_refinement_blocked_when_over_credit_ceiling(self):
+        """A refinement that would break the per-run ceiling must not run."""
+        empty_brokers = {"top_buyers": [], "top_sellers": []}
+        ff = {"percent": 45.2, "shares": 1.0, "as_of": None, "note": None}
+        broker_calls = {"n": 0}
+
+        async def fake_tool(name, args):
+            if name == "fetch_broker_summary_top":
+                broker_calls["n"] += 1
+                # Report real spend so the runtime gate has something to weigh.
+                return ToolExecutionResult(name, "done", data=empty_brokers, credits_used=4.0)
+            if name == "fetch_free_float":
+                return ToolExecutionResult(name, "done", data=ff, credits_used=0.5)
+            if name == "draft_narrative":
+                return ToolExecutionResult(name, "done", data="Narasi faktual tanpa saran.")
+            return ToolExecutionResult(name, "error", error=f"unexpected {name}")
+
+        with patch("app.agent.loop.RateGovernor.check_and_record", return_value=None), patch(
+            "app.agent.loop.Executor.run_tool", side_effect=fake_tool
+        ):
+            resp = asyncio.run(run_investigate_loop(InvestigateRequest(ticker="BBCA", mode="live")))
+
+        self.assertEqual(broker_calls["n"], 1)
+        self.assertTrue(any("governor kredit" in (s.detail or "") for s in resp.steps))
+        self.assertIn("Ini bukan saran investasi", resp.disclaimer)
+
+    def test_cache_get_returns_copy(self):
+        """Mutating a returned cache record must not rewrite the stored one."""
+        cache_put("COPYX", {"ticker": "COPYX", "mode": "live", "nested": {"a": 1}})
+        first = cache_get("COPYX")
+        self.assertIsNotNone(first)
+        if first:
+            first["mode"] = "cache"
+            first["nested"]["a"] = 999
+        second = cache_get("COPYX")
+        self.assertIsNotNone(second)
+        if second:
+            self.assertEqual(second["mode"], "live")
+            self.assertEqual(second["nested"]["a"], 1)
+
+    def test_live_client_quota_returns_429(self):
+        """Per-caller quota must reject live requests past the window limit."""
+        ClientGovernor.reset()
+        self.addCleanup(ClientGovernor.reset)
+
+        async def fake_loop(req):
+            return await run_investigate_loop(InvestigateRequest(ticker=req.ticker, mode="mock"))
+
+        with patch("app.api.v1.investigate.run_investigate_loop", side_effect=fake_loop):
+            statuses = [
+                self.client.post("/v1/investigate", json={"ticker": "BBCA", "mode": "live"}).status_code
+                for _ in range(ClientGovernor.MAX_LIVE_PER_WINDOW + 1)
+            ]
+
+        self.assertEqual(statuses[:ClientGovernor.MAX_LIVE_PER_WINDOW],
+                         [200] * ClientGovernor.MAX_LIVE_PER_WINDOW)
+        self.assertEqual(statuses[-1], 429)
+
+    def test_mock_mode_is_not_quota_limited(self):
+        """Free modes must never hit the live quota."""
+        ClientGovernor.reset()
+        self.addCleanup(ClientGovernor.reset)
+
+        statuses = [
+            self.client.post("/v1/investigate", json={"ticker": "BBCA", "mode": "mock"}).status_code
+            for _ in range(ClientGovernor.MAX_LIVE_PER_WINDOW + 2)
+        ]
+        self.assertTrue(all(s == 200 for s in statuses), statuses)
+
+    def test_free_float_soft_fail_is_detected(self):
+        """ok=False from the free-float tool must render as a failure, not metadata."""
+        brokers = {
+            "top_buyers": [
+                {
+                    "broker_code": "YK",
+                    "broker_name": "Yuanta",
+                    "net_value": 1.0,
+                    "buy_value": 2.0,
+                    "sell_value": 1.0,
+                    "rank": 1,
+                }
+            ],
+            "top_sellers": [],
+        }
+        failed_ff = {
+            "ok": False,
+            "percent": None,
+            "shares": None,
+            "as_of": None,
+            "note": "Gagal mengambil free float live: timeout",
+        }
+
+        async def fake_tool(name, args):
+            if name == "fetch_broker_summary_top":
+                return ToolExecutionResult(name, "done", data=brokers, credits_used=2.0)
+            if name == "fetch_free_float":
+                return ToolExecutionResult(name, "done", data=failed_ff, credits_used=0.5)
+            if name == "draft_narrative":
+                return ToolExecutionResult(name, "done", data="Narasi faktual tanpa saran.")
+            return ToolExecutionResult(name, "error", error=f"unexpected {name}")
+
+        with patch("app.agent.loop.RateGovernor.check_and_record", return_value=None), patch(
+            "app.agent.loop.Executor.run_tool", side_effect=fake_tool
+        ):
+            resp = asyncio.run(run_investigate_loop(InvestigateRequest(ticker="BBCA", mode="live")))
+
+        self.assertTrue(any("Free float live gagal" in (s.detail or "") for s in resp.steps))
+        self.assertIsNone(resp.free_float.percent)
+
 
 if __name__ == "__main__":
     unittest.main()

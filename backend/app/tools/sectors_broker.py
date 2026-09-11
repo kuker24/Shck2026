@@ -2,6 +2,7 @@ from typing import Any
 from datetime import date, timedelta
 import httpx
 from ..core.config import settings
+from .errors import SectorsConfigError
 
 
 def _auth_headers(key: str) -> dict[str, str]:
@@ -28,7 +29,7 @@ async def fetch_broker_summary_top(ticker: str, api_key: str | None = None) -> d
     """Fetch top broker buyers/sellers from Sectors API v2 (~2 credits)."""
     key = api_key or settings.SECTORS_API_KEY
     if not key:
-        raise ValueError("SECTORS_API_KEY tidak dikonfigurasi untuk pemanggilan live.")
+        raise SectorsConfigError("SECTORS_API_KEY tidak dikonfigurasi untuk pemanggilan live.")
 
     base = settings.SECTORS_BASE_URL.rstrip("/")
     # Accept either https://api.sectors.app or .../v2

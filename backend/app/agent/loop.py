@@ -34,6 +34,79 @@ def merge_refinement_evidence(
     return broker_data, ff_data
 
 
+async def _mock_fallback_response(
+    ticker: str,
+    start_time: float,
+    error_code: str,
+    error_message: str,
+    step_detail: str,
+    steps_before: list[Step] | None = None,
+    credit_estimate: float = 0.0,
+    tools_run: list[str] | None = None,
+) -> InvestigateResponse:
+    """Serve mock payload when live is blocked or fails. Always audited, never bills."""
+    tools_executed = list(tools_run or [])
+    tools_executed.append("load_mock_payload")
+
+    mock_res = await Executor.run_tool("load_mock_payload", {"ticker": ticker})
+    mock_dict: dict[str, Any] = mock_res.data or {}
+
+    steps_out = list(steps_before or [])
+    steps_out.append(
+        Step(
+            id=f"s{len(steps_out) + 1}",
+            role="planner" if not steps_before else "executor",
+            title="Governor menahan panggilan live" if not steps_before else "Fallback data simulasi",
+            status="done",
+            detail=step_detail,
+        )
+    )
+    steps_out.append(
+        Step(
+            id=f"s{len(steps_out) + 1}",
+            role="critic",
+            title="Meninjau hasil & menyusun narasi aman",
+            status="done",
+            detail="Narasi simulasi ditinjau; disclaimer hukum disematkan",
+        )
+    )
+
+    critic_rev = Critic.review(
+        ticker=ticker,
+        observations={
+            "brokers": mock_dict.get("brokers", {}),
+            "free_float": mock_dict.get("free_float", {}),
+        },
+        drafted_narrative=mock_dict.get("narrative", ""),
+    )
+
+    latency = (time.perf_counter() - start_time) * 1000
+    AuditLogger.log_investigation(
+        ticker=ticker,
+        requested_mode="live",
+        served_mode="mock",
+        tools_run=tools_executed,
+        credit_estimate=credit_estimate,
+        latency_ms=latency,
+        error=f"{error_code}: {error_message}",
+    )
+
+    return InvestigateResponse(
+        ticker=ticker,
+        mode="mock",
+        as_of=datetime.now(timezone.utc).isoformat(),
+        credit_estimate=credit_estimate,
+        steps=steps_out,
+        brokers=Brokers.model_validate(
+            mock_dict.get("brokers", {"top_buyers": [], "top_sellers": []})
+        ),
+        free_float=FreeFloat.model_validate(mock_dict.get("free_float", {})),
+        narrative=critic_rev.narrative,
+        disclaimer=critic_rev.disclaimer,
+        error=ErrorDetail(code=error_code, message=error_message),
+    )
+
+
 async def run_investigate_loop(request: InvestigateRequest) -> InvestigateResponse:
     start_time = time.perf_counter()
     tools_executed: list[str] = []
@@ -152,22 +225,49 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
     # Governor check: Rate limit / Cooldown
     cooldown_wait = RateGovernor.check_and_record(ticker)
     if cooldown_wait:
-        # Rate limit hit: return cached or mock with warning step
+        # Rate limit hit: never spend credits. Serve cache, else mock with warning.
         cached = cache_get(ticker)
         if cached:
             cached["mode"] = "cache"
+            latency = (time.perf_counter() - start_time) * 1000
+            AuditLogger.log_investigation(
+                ticker=ticker,
+                requested_mode="live",
+                served_mode="cache",
+                tools_run=["cache_get"],
+                credit_estimate=0.0,
+                latency_ms=latency,
+                error=f"RATE_COOLDOWN: tunggu {cooldown_wait}s",
+            )
             return InvestigateResponse.model_validate(cached)
+
+        return await _mock_fallback_response(
+            ticker=ticker,
+            start_time=start_time,
+            error_code="RATE_COOLDOWN",
+            error_message=(
+                f"Cooldown live aktif untuk {ticker}; coba lagi dalam {cooldown_wait} detik. "
+                "Menyajikan data simulasi (0 kredit)."
+            ),
+            step_detail=(
+                f"Cooldown governor aktif ({cooldown_wait}s); panggilan live dibatalkan "
+                "demi menjaga kredit"
+            ),
+        )
 
     # Governor check: Credit validation
     tool_names = [s.tool_name for s in plan.steps]
     try:
-        estimated_credits = CreditGovernor.validate_plan_credits(tool_names)
+        CreditGovernor.validate_plan_credits(tool_names)
     except Exception as ge:
-        # Fallback to mock
-        mock_res = await Executor.run_tool("load_mock_payload", {"ticker": ticker})
-        d = mock_res.data or {}
-        d["mode"] = "mock"
-        return InvestigateResponse.model_validate(d)
+        # Plan melebihi pagu kredit: jangan panggil live sama sekali.
+        return await _mock_fallback_response(
+            ticker=ticker,
+            start_time=start_time,
+            error_code="CREDIT_LIMIT",
+            error_message=f"Rencana ditolak governor kredit: {ge}",
+            step_detail=f"Rencana ditolak governor kredit ({ge}); memakai data simulasi",
+        )
 
     # Step 1: Planner
     steps_out.append(
@@ -202,11 +302,19 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
         cached = cache_get(ticker)
         if cached:
             cached["mode"] = "cache"
+            latency = (time.perf_counter() - start_time) * 1000
+            AuditLogger.log_investigation(
+                ticker=ticker,
+                requested_mode="live",
+                served_mode="cache",
+                tools_run=tools_executed + ["cache_get"],
+                credit_estimate=total_credits,
+                latency_ms=latency,
+                error=f"LIVE_FAIL_FALLBACK: {broker_res.error}",
+            )
             return InvestigateResponse.model_validate(cached)
 
         # Fallback to mock data with note
-        mock_res = await Executor.run_tool("load_mock_payload", {"ticker": ticker})
-        mock_dict = mock_res.data or {}
         steps_out.append(
             Step(
                 id="s3",
@@ -216,26 +324,15 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
                 detail="Dilewati karena panggilan live broker bermasalah",
             )
         )
-        steps_out.append(
-            Step(
-                id="s4",
-                role="critic",
-                title="Meninjau hasil & menyusun narasi aman",
-                status="done",
-                detail="Fallback otomatis ke mock data demi kelangsungan demo",
-            )
-        )
-        return InvestigateResponse(
+        return await _mock_fallback_response(
             ticker=ticker,
-            mode="mock",
-            as_of=datetime.now(timezone.utc).isoformat(),
-            credit_estimate=0.0,
-            steps=steps_out,
-            brokers=Brokers.model_validate(mock_dict.get("brokers", {"top_buyers": [], "top_sellers": []})),
-            free_float=FreeFloat.model_validate(mock_dict.get("free_float", {})),
-            narrative=mock_dict.get("narrative", ""),
-            disclaimer=DEFAULT_DISCLAIMER,
-            error=ErrorDetail(code="LIVE_FAIL_FALLBACK", message="Gagal memanggil live Sectors API; beralih ke mock."),
+            start_time=start_time,
+            error_code="LIVE_FAIL_FALLBACK",
+            error_message="Gagal memanggil live Sectors API; beralih ke mock.",
+            step_detail="Fallback otomatis ke mock data demi kelangsungan demo",
+            steps_before=steps_out,
+            credit_estimate=total_credits,
+            tools_run=tools_executed,
         )
 
     steps_out[-1].status = "done"
@@ -255,9 +352,18 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
     tools_executed.append("fetch_free_float")
     ff_res = await Executor.run_tool("fetch_free_float", {"ticker": ticker})
     total_credits += ff_res.credits_used
-    if ff_res.status == "error" or not isinstance(ff_res.data, dict):
-        steps_out[-1].status = "done"
-        err_note = ff_res.error or "data tidak lengkap"
+    # The tool soft-fails internally and flags it with ok=False, so check both
+    # the executor status and the tool's own success flag.
+    ff_payload = ff_res.data if isinstance(ff_res.data, dict) else None
+    ff_failed = (
+        ff_res.status == "error"
+        or ff_payload is None
+        or ff_payload.get("ok") is False
+    )
+
+    steps_out[-1].status = "done"
+    if ff_failed or ff_payload is None:
+        err_note = ff_res.error or (ff_payload or {}).get("note") or "data tidak lengkap"
         steps_out[-1].detail = (
             f"Free float live gagal ({err_note}); pemeriksaan broker tetap dilanjutkan"
         )
@@ -268,9 +374,8 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
             "note": f"Free float live tidak tersedia: {err_note}",
         }
     else:
-        steps_out[-1].status = "done"
         steps_out[-1].detail = f"Free float {ticker} siap"
-        ff_data = ff_res.data
+        ff_data = {k: v for k, v in ff_payload.items() if k != "ok"}
 
     # Draft raw narrative
     tools_executed.append("draft_narrative")
@@ -306,7 +411,12 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
         drafted_narrative=draft_text,
     )
 
+    refinement_blocked = False
     if critic_review.needs_refinement and critic_review.refinement_tool:
+        if not CreditGovernor.can_afford(total_credits, critic_review.refinement_tool):
+            refinement_blocked = True
+
+    if critic_review.needs_refinement and critic_review.refinement_tool and not refinement_blocked:
         tools_executed.append(critic_review.refinement_tool)
         ref_res = await Executor.run_tool(
             critic_review.refinement_tool,
@@ -337,6 +447,12 @@ async def run_investigate_loop(request: InvestigateRequest) -> InvestigateRespon
             refinement_count=1,
         )
         steps_out[-1].detail = "Refinement selesai; narasi dan disclaimer dari critic terakhir"
+    elif refinement_blocked:
+        steps_out[-1].detail = (
+            "Refinement dibatalkan governor kredit "
+            f"(pagu {CreditGovernor.MAX_CREDITS_PER_INVESTIGATE} kredit per investigasi); "
+            "narasi disusun dari bukti yang ada"
+        )
     else:
         steps_out[-1].detail = "Objektivitas narasi disetujui, disclaimer hukum disematkan"
 

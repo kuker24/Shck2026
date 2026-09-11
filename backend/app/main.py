@@ -12,12 +12,14 @@ app = FastAPI(
 )
 
 # CORS configuration for Next.js frontend
+# CORS for the Next.js frontend. The API is stateless and cookie-free, so
+# credentials stay off and only the methods actually used are allowed.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 @app.get("/health", tags=["health"])

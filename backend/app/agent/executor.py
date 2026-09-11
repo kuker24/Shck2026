@@ -1,6 +1,7 @@
 import time
 from typing import Any
 from ..tools.allowlist import verify_tool_allowed
+from ..tools.errors import SectorsConfigError
 from ..tools.mock_loader import load_mock_payload
 from ..tools.sectors_broker import fetch_broker_summary_top
 from ..tools.sectors_free_float import fetch_free_float
@@ -110,7 +111,18 @@ class Executor:
             else:
                 raise ValueError(f"Alat tidak dikenali: {tool_name}")
 
+        except SectorsConfigError as e:
+            # Failed before any request left the process: nothing was billed.
+            return ToolExecutionResult(
+                tool_name=tool_name,
+                status="error",
+                error=str(e),
+                latency_ms=(time.perf_counter() - start_t) * 1000,
+                credits_used=0.0,
+            )
+
         except Exception as e:
+            # Reached (or may have reached) Sectors: bill conservatively.
             return ToolExecutionResult(
                 tool_name=tool_name,
                 status="error",

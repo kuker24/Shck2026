@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { X, Search } from 'lucide-react';
 import { COPY } from '@/constants/copy';
 import { parseTicker, tickerErrorCopy } from '@/lib/ticker';
 
@@ -81,7 +82,7 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
   };
 
   const chipClass =
-    'pressable px-3 py-1 min-h-[44px] sm:min-h-[28px] rounded border border-slash-graphite bg-slash-carbon/80 hover:border-slash-copper/60 hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none text-slash-mist font-mono text-[11px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150';
+    'pressable px-2.5 min-h-[32px] rounded border border-slash-graphite bg-slash-carbon/80 hover:border-slash-copper/60 hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none text-slash-mist font-mono text-[11px] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 inline-flex items-center';
 
   const submitLabel = isLoading
     ? COPY.loading
@@ -101,9 +102,12 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
           Kode efek saham IDX
         </label>
         <div className="relative flex-1 flex items-center rounded-md bg-slash-carbon border border-slash-graphite focus-within:border-slash-copper focus-within:ring-1 focus-within:ring-slash-copper/30 transition-[border-color,box-shadow] duration-150">
-          <span className="pl-3.5 sm:pl-4 text-[11px] font-sans text-slash-mist select-none shrink-0">
-            {COPY.ticker_label}
-          </span>
+          <Search
+            size={15}
+            strokeWidth={2}
+            className="ml-3.5 sm:ml-4 text-slash-steel shrink-0"
+            aria-hidden="true"
+          />
           <input
             ref={inputRef}
             id="ticker-search-input"
@@ -121,7 +125,7 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
             aria-label="Kode efek saham IDX"
             aria-invalid={errorMsg ? 'true' : undefined}
             aria-describedby={errorMsg ? 'ticker-error ticker-hint' : 'ticker-hint'}
-            className="w-full pl-2 pr-10 py-3.5 sm:py-3 bg-transparent text-slash-paper placeholder-slash-steel font-mono text-base sm:text-[15px] font-semibold uppercase tracking-wide focus:outline-none disabled:opacity-50"
+            className="w-full pl-3 pr-12 py-3.5 sm:py-3 bg-transparent text-slash-paper placeholder-slash-steel font-mono text-base sm:text-[15px] font-semibold uppercase tracking-wide focus:outline-none disabled:opacity-50"
           />
 
           <div className="absolute right-2 flex items-center">
@@ -130,12 +134,12 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
                 type="button"
                 onClick={handleClear}
                 aria-label="Kosongkan kode"
-                className="pressable text-slash-mist hover:text-slash-paper text-sm font-mono min-w-[44px] min-h-[44px] sm:min-w-[28px] sm:min-h-[28px] inline-flex items-center justify-center rounded-sm cursor-pointer"
+                className="pressable text-slash-mist hover:text-slash-paper w-9 h-9 inline-flex items-center justify-center rounded-md cursor-pointer transition-colors duration-150"
               >
-                <span aria-hidden="true">×</span>
+                <X size={15} strokeWidth={2} aria-hidden="true" />
               </button>
             ) : (
-              <kbd className="hidden md:inline-block font-mono text-[10px] text-slash-steel px-1.5 py-0.5 rounded-sm border border-slash-graphite select-none">
+              <kbd className="hidden md:inline-block font-mono text-[10px] text-slash-mist px-1.5 py-0.5 rounded-sm border border-slash-graphite select-none">
                 /
               </kbd>
             )}
@@ -151,33 +155,44 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
         </button>
       </form>
 
-      <p id="ticker-hint" className="text-sm text-slash-mist font-serif leading-relaxed pl-1">
-        {COPY.search_hint}
-      </p>
-
-      {errorMsg && (
-        <p id="ticker-error" className="text-sm text-status-error font-serif leading-relaxed pl-1" role="alert">
+      {errorMsg ? (
+        <p id="ticker-error" className="text-[13px] text-status-error font-sans leading-relaxed" role="alert">
           {errorMsg}
+        </p>
+      ) : (
+        <p id="ticker-hint" className="text-[13px] text-slash-fog font-sans leading-relaxed">
+          {COPY.search_hint}
         </p>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Kode cepat">
-          {['BBCA', 'BBRI', 'TLKM', 'GOTO'].map((code) => (
-            <button key={code} type="button" onClick={() => handleSelectQuick(code)} disabled={isLoading} className={chipClass}>
-              {code}
-            </button>
-          ))}
-        </div>
+      {/* One row of entry points: quick codes for the common case, full search
+          for everything else. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+        <span className="text-[11px] font-sans text-slash-steel select-none shrink-0">
+          Sering dilihat
+        </span>
+        {['BBCA', 'BBRI', 'TLKM', 'GOTO'].map((code) => (
+          <button
+            key={code}
+            type="button"
+            onClick={() => handleSelectQuick(code)}
+            disabled={isLoading}
+            className={chipClass}
+          >
+            {code}
+          </button>
+        ))}
 
         {onOpenCommandDialog && (
           <button
             type="button"
             onClick={onOpenCommandDialog}
-            className="pressable text-[11px] font-sans px-3 py-1.5 min-h-[44px] sm:min-h-[32px] rounded-md bg-slash-carbon border border-slash-graphite text-slash-mist hover:text-slash-paper hover:border-slash-slate focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none cursor-pointer transition-colors duration-150"
+            className="pressable text-[11px] font-sans px-1.5 min-h-[32px] rounded text-slash-mist hover:text-slash-paper focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none cursor-pointer transition-colors duration-150 inline-flex items-center gap-1.5"
           >
-            {COPY.cta_view_all}{' '}
-            <kbd className="font-mono text-slash-copper ml-1">Ctrl/⌘K</kbd>
+            {COPY.cta_view_all}
+            <kbd className="hidden sm:inline font-mono text-[10px] text-slash-steel border border-slash-graphite rounded-xs px-1 py-0.5">
+              ⌘K
+            </kbd>
           </button>
         )}
       </div>

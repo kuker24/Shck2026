@@ -26,18 +26,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div className={`space-y-8 ${className}`}>
       {steps && steps.length > 0 && <StepsTimeline steps={steps} />}
 
-      <div className="max-w-xl">
-        <h2 className="text-lg font-serif font-medium text-slash-paper mb-3 tracking-[-0.01em]">
+      <div className="max-w-xl border-t border-slash-graphite pt-6">
+        <h2 className="text-base font-sans font-semibold text-slash-paper mb-2 tracking-[-0.01em] m-0">
           {COPY.empty_title}
           {ticker ? ` · ${ticker}` : ''}
         </h2>
 
-        <p className="text-base text-slash-mist font-serif leading-relaxed mb-2 max-w-[65ch]">
+        <p className="text-[13px] text-slash-mist font-sans leading-relaxed mb-1.5 max-w-[62ch]">
           {errorMessage && !/error|failed|exception|500|404/i.test(errorMessage)
             ? errorMessage
             : COPY.empty_body}
         </p>
-        <p className="text-sm text-slash-fog font-serif leading-relaxed mb-8 max-w-[65ch]">
+        <p className="text-[13px] text-slash-fog font-sans leading-relaxed mb-6 max-w-[62ch]">
           {COPY.empty_suggest}
         </p>
 
@@ -45,7 +45,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           <button
             type="button"
             onClick={onTryBBCA}
-            className="pressable px-5 py-2.5 min-h-[44px] rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-sm font-medium cursor-pointer focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none transition-colors duration-150"
+            className="pressable px-4 min-h-[38px] rounded-md bg-slash-paper hover:bg-slash-bone text-slash-obsidian font-sans text-[13px] font-medium cursor-pointer focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none transition-colors duration-150 inline-flex items-center"
           >
             {COPY.cta_try_example}
           </button>
@@ -53,7 +53,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           <button
             type="button"
             onClick={onReset}
-            className="pressable px-5 py-2.5 min-h-[44px] rounded-md bg-slash-carbon text-slash-bone font-sans text-sm border border-slash-graphite cursor-pointer hover:text-slash-paper hover:border-slash-slate focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none transition-colors duration-150"
+            className="pressable px-4 min-h-[38px] rounded-md bg-slash-carbon text-slash-mist font-sans text-[13px] border border-slash-graphite cursor-pointer hover:text-slash-paper hover:border-slash-slate focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none transition-colors duration-150 inline-flex items-center"
           >
             {COPY.cta_retry}
           </button>

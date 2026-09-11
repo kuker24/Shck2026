@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { COPY } from '@/constants/copy';
+import { X } from 'lucide-react';
+import { useOverlayTransition } from '@/lib/useOverlayTransition';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   onClose,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const { mounted, open } = useOverlayTransition(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -74,7 +76,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     return () => el.removeEventListener('keydown', trap);
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   return (
     <div
@@ -83,27 +85,27 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       aria-label="Pintasan keyboard"
       tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 overlay-dim"
+      data-open={open ? 'true' : 'false'}
       onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
     >
+      {/* Escape is handled by the window listener above; stopping keydown
+          propagation on the panel prevented it from ever arriving. */}
       <div
         ref={panelRef}
         role="document"
         className="modal-panel w-full max-w-md bg-slash-onyx border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-4"
+        data-open={open ? 'true' : 'false'}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">Pintasan keyboard</h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em] m-0">Pintasan keyboard</h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup pintasan keyboard"
-            className="pressable text-xs font-sans px-3 py-1 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md text-slash-mist hover:text-slash-paper cursor-pointer"
+            className="pressable inline-flex items-center justify-center rounded-md text-slash-mist hover:text-slash-paper cursor-pointer w-11 h-11 -mr-2 -mt-1 shrink-0 transition-colors duration-150"
           >
-            {COPY.cta_close}
+            <X size={16} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 

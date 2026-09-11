@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { ArrowUp, ArrowDown, Plus, Minus, X } from 'lucide-react';
 import { BrokerRow } from '@/types/investigate';
 import { formatIDR } from '@/lib/formatters';
 import { getBrokerInfo, BrokerMetadata } from '@/constants/brokerMetadata';
 import { COPY } from '@/constants/copy';
+import { useOverlayTransition } from '@/lib/useOverlayTransition';
 
 interface BrokerAnalysisViewProps {
   topBuyers: BrokerRow[];
@@ -12,7 +14,7 @@ interface BrokerAnalysisViewProps {
   className?: string;
 }
 
-type ViewMode = 'split' | 'buyers' | 'sellers' | 'matrix';
+type ViewMode = 'split' | 'buyers' | 'sellers';
 
 export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
   topBuyers,
@@ -25,6 +27,9 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
+  const { mounted: modalMounted, open: modalOpen } = useOverlayTransition(
+    activeHoverBroker !== null
+  );
 
   // Modal: Esc + focus trap + return focus
   useEffect(() => {
@@ -61,17 +66,16 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
     };
   }, [activeHoverBroker]);
 
+  // Denominator is the rows the API returned, not the whole market. A "top 5 of
+  // 5" ratio would always be 100%, so only the top-3 share is reported and the
+  // coverage limit is stated next to it.
   const totalBuyValue = topBuyers.reduce((sum, b) => sum + b.buy_value, 0) || 1;
   const top3BuyValue = topBuyers.slice(0, 3).reduce((sum, b) => sum + b.buy_value, 0);
-  const top5BuyValue = topBuyers.slice(0, 5).reduce((sum, b) => sum + b.buy_value, 0);
   const cr3BuyersPercent = Math.round((top3BuyValue / totalBuyValue) * 100);
-  const cr5BuyersPercent = Math.round((top5BuyValue / totalBuyValue) * 100);
 
   const totalSellValue = topSellers.reduce((sum, s) => sum + s.sell_value, 0) || 1;
   const top3SellValue = topSellers.slice(0, 3).reduce((sum, s) => sum + s.sell_value, 0);
-  const top5SellValue = topSellers.slice(0, 5).reduce((sum, s) => sum + s.sell_value, 0);
   const cr3SellersPercent = Math.round((top3SellValue / totalSellValue) * 100);
-  const cr5SellersPercent = Math.round((top5SellValue / totalSellValue) * 100);
 
   let foreignNet = 0;
   let domesticNet = 0;
@@ -97,16 +101,18 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
   const maxNetBuyer = Math.max(...topBuyers.map((d) => Math.abs(d.net_value)), 1);
   const maxNetSeller = Math.max(...topSellers.map((d) => Math.abs(d.net_value)), 1);
 
+  // Toggle group rather than role="tablist": these buttons swap content in
+  // place and never owned tabpanel semantics, so aria-pressed is the honest
+  // mapping and keeps arrow-key expectations off the table.
   const tabBtn = (id: ViewMode, label: string) => (
     <button
       type="button"
-      role="tab"
-      aria-selected={viewMode === id}
+      aria-pressed={viewMode === id}
       onClick={() => setViewMode(id)}
-      className={`pressable px-3 sm:px-3.5 py-1.5 min-h-[36px] sm:min-h-[32px] rounded-md font-sans text-xs cursor-pointer transition-colors duration-150 whitespace-nowrap inline-flex items-center justify-center ${
+      className={`pressable px-3 sm:px-3.5 py-1.5 min-h-[36px] sm:min-h-[30px] rounded-md font-sans text-xs cursor-pointer transition-colors duration-150 whitespace-nowrap inline-flex items-center justify-center ${
         viewMode === id
-          ? 'bg-slash-paper text-slash-obsidian font-semibold shadow-xs'
-          : 'text-slash-fog hover:text-slash-paper hover:bg-slash-carbon/50'
+          ? 'bg-slash-paper text-slash-obsidian font-semibold'
+          : 'text-slash-mist hover:text-slash-paper hover:bg-slash-carbon'
       }`}
     >
       {label}
@@ -118,22 +124,28 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
     const showFullColumns = viewMode !== 'split';
     const netColWidth = showFullColumns
       ? (useCompact ? 'w-28 sm:w-36' : 'w-40 sm:w-48')
-      : (useCompact ? 'w-28 sm:w-36' : 'w-44 sm:w-52');
+      : (useCompact ? 'w-24 sm:w-36' : 'w-44 sm:w-52');
     const buySellColWidth = useCompact ? 'w-24 sm:w-28' : 'w-36 sm:w-44';
+    // Split + compact must fit a 375px viewport unaided: a min-width just wide
+    // enough to force a 17px scroll clipped the "M" unit off every net value.
+    // The name column truncates instead, which loses nothing.
     const tableMinWidth = showFullColumns
       ? (useCompact ? 'min-w-[560px]' : 'min-w-[760px]')
-      : (useCompact ? 'min-w-[360px]' : 'min-w-[460px]');
+      : (useCompact ? 'min-w-0' : 'min-w-[460px]');
 
     return (
       <div className="border border-slash-graphite rounded-lg flex flex-col overflow-hidden bg-slash-obsidian">
-        <div className="px-3.5 sm:px-4 py-3 border-b border-slash-graphite flex items-center justify-between gap-3 bg-slash-onyx/40">
-          <h3 className="text-xs sm:text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em] whitespace-nowrap truncate">
+        {/* The top-3 share already appears once in the summary above, so the
+            header only names the table. */}
+        <div className="px-3.5 sm:px-4 py-3 border-b border-slash-graphite flex items-center gap-2.5 bg-slash-onyx/40">
+          {isBuyers ? (
+            <ArrowUp size={14} strokeWidth={2.5} className="text-trade-buy shrink-0" aria-hidden="true" />
+          ) : (
+            <ArrowDown size={14} strokeWidth={2.5} className="text-trade-sell shrink-0" aria-hidden="true" />
+          )}
+          <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em] truncate m-0">
             {isBuyers ? COPY.buyers_title : COPY.sellers_title}
           </h3>
-          <span className="inline-flex items-center gap-1 font-mono text-[11px] text-slash-mist bg-slash-carbon px-2 py-0.5 rounded border border-slash-graphite/60 whitespace-nowrap shrink-0">
-            <span className="text-slash-fog font-sans text-[10px]">Top 3:</span>
-            <span className="font-semibold text-slash-paper">{isBuyers ? cr3BuyersPercent : cr3SellersPercent}%</span>
-          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -151,7 +163,9 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                     <th scope="col" className={`py-2.5 px-2 sm:px-3 text-right ${buySellColWidth}`}>Jual</th>
                   </>
                 )}
-                <th scope="col" className={`py-2.5 px-2.5 sm:px-3.5 text-right ${netColWidth}`}>Net</th>
+                <th scope="col" className={`py-2.5 px-2.5 sm:px-3.5 text-right ${netColWidth}`}>
+                  <span title={COPY.broker_section_hint}>Net</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slash-graphite/50 font-mono-numbers">
@@ -211,9 +225,13 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                               onClick={() => setExpandedCode(isExpanded ? null : `${type}-${rowKey}`)}
                               aria-expanded={isExpanded}
                               aria-label={isExpanded ? `Sembunyikan rincian ${row.broker_code}` : `Tampilkan rincian ${row.broker_code}`}
-                              className={`${showFullColumns ? 'sm:hidden' : ''} pressable ml-auto text-slash-mist hover:text-slash-paper font-mono text-xs w-6 h-6 inline-flex items-center justify-center rounded-xs cursor-pointer shrink-0`}
+                              className={`${showFullColumns ? 'sm:hidden' : ''} pressable ml-auto text-slash-mist hover:text-slash-paper w-7 h-7 inline-flex items-center justify-center rounded-xs cursor-pointer shrink-0 transition-colors duration-150`}
                             >
-                              <span aria-hidden="true">{isExpanded ? '−' : '+'}</span>
+                              {isExpanded ? (
+                                <Minus size={14} strokeWidth={2.5} aria-hidden="true" />
+                              ) : (
+                                <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
+                              )}
                             </button>
                           </div>
                           {isExpanded && (
@@ -280,74 +298,80 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
   };
 
   return (
-    <section aria-label="Aliran broker" className={`space-y-5 ${className}`}>
-      <p className="text-sm text-slash-mist font-serif leading-relaxed">{COPY.broker_section_hint}</p>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Tampilan tabel">
+    <section aria-labelledby="broker-flow-heading" className={`space-y-5 ${className}`}>
+      <div>
+        <h2
+          id="broker-flow-heading"
+          className="text-sm font-sans font-semibold text-slash-paper tracking-[-0.01em] m-0"
+        >
+          Aliran broker
+        </h2>
+        <p className="text-[13px] text-slash-fog font-sans leading-relaxed mt-1 mb-0 max-w-[68ch]">
+          {COPY.coverage_note}
+        </p>
+      </div>
+
+      {/* Summary figures. Gold means money in, rose means money out —
+          the interactive accent is copper so the hues never collide. */}
+      <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 py-5 border-y border-slash-graphite m-0">
+        <div>
+          <dt className="text-xs font-sans text-slash-fog mb-1.5">{COPY.foreign_label} · neto</dt>
+          <dd
+            className={`font-mono text-lg sm:text-xl font-medium tabular-nums tracking-tight m-0 ${
+              foreignNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'
+            }`}
+          >
+            {foreignNet >= 0 ? '+' : ''}
+            {formatIDR(foreignNet, useCompact)}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-sans text-slash-fog mb-1.5">{COPY.domestic_label} · neto</dt>
+          <dd
+            className={`font-mono text-lg sm:text-xl font-medium tabular-nums tracking-tight m-0 ${
+              domesticNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'
+            }`}
+          >
+            {domesticNet >= 0 ? '+' : ''}
+            {formatIDR(domesticNet, useCompact)}
+          </dd>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <dt className="text-xs font-sans text-slash-fog mb-1.5">{COPY.cr_label}</dt>
+          <dd className="font-mono text-lg sm:text-xl font-medium text-slash-paper tabular-nums m-0 flex items-baseline gap-3 flex-wrap">
+            <span>
+              {cr3BuyersPercent}%
+              <span className="text-[11px] font-sans font-normal text-slash-fog ml-1.5">beli</span>
+            </span>
+            <span className="text-slash-steel font-normal text-sm" aria-hidden="true">
+              /
+            </span>
+            <span>
+              {cr3SellersPercent}%
+              <span className="text-[11px] font-sans font-normal text-slash-fog ml-1.5">jual</span>
+            </span>
+          </dd>
+          <p className="text-xs text-slash-fog font-sans leading-relaxed mt-1.5 mb-0 max-w-[46ch]">
+            {COPY.cr_explain}
+          </p>
+        </div>
+      </dl>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Tampilan tabel">
           {tabBtn('split', 'Beli & jual')}
           {tabBtn('buyers', 'Pembeli')}
           {tabBtn('sellers', 'Penjual')}
-          {tabBtn('matrix', 'Konsentrasi')}
         </div>
 
-        <div
-          className="inline-flex items-center p-1 rounded-lg bg-slash-carbon border border-slash-graphite shrink-0"
-          role="group"
-          aria-label="Format angka"
+        <button
+          type="button"
+          onClick={() => setUseCompact((prev) => !prev)}
+          aria-pressed={!useCompact}
+          className="pressable px-3 py-1.5 min-h-[36px] sm:min-h-[30px] rounded-md border border-slash-graphite bg-slash-carbon text-slash-mist hover:text-slash-paper hover:border-slash-slate font-sans text-xs cursor-pointer transition-colors duration-150 whitespace-nowrap inline-flex items-center shrink-0"
         >
-          <button
-            type="button"
-            onClick={() => setUseCompact(true)}
-            aria-pressed={useCompact}
-            title="Tampilkan angka ringkas, contoh Rp 125,0 M"
-            className={`pressable px-3 py-1.5 min-h-[32px] sm:min-h-[28px] rounded-md font-sans text-xs font-medium cursor-pointer transition-all duration-150 whitespace-nowrap inline-flex items-center gap-1.5 ${
-              useCompact
-                ? 'bg-slash-graphite text-slash-paper shadow-xs font-semibold'
-                : 'text-slash-fog hover:text-slash-paper'
-            }`}
-          >
-            <span>Angka ringkas</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setUseCompact(false)}
-            aria-pressed={!useCompact}
-            title="Tampilkan angka lengkap, contoh Rp 125.000.000.000"
-            className={`pressable px-3 py-1.5 min-h-[32px] sm:min-h-[28px] rounded-md font-sans text-xs font-medium cursor-pointer transition-all duration-150 whitespace-nowrap inline-flex items-center gap-1.5 ${
-              !useCompact
-                ? 'bg-slash-graphite text-slash-paper shadow-xs font-semibold'
-                : 'text-slash-fog hover:text-slash-paper'
-            }`}
-          >
-            <span>Angka lengkap</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 py-4 border-y border-slash-graphite">
-        <div>
-          <div className="text-xs font-sans font-medium text-slash-mist mb-1.5">{COPY.foreign_label} · neto</div>
-          <div className={`font-mono text-base sm:text-lg font-medium tabular-nums tracking-tight ${foreignNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'}`}>
-            {foreignNet >= 0 ? '+' : ''}{formatIDR(foreignNet, useCompact)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-sans font-medium text-slash-mist mb-1.5">{COPY.domestic_label} · neto</div>
-          <div className={`font-mono text-base sm:text-lg font-medium tabular-nums tracking-tight ${domesticNet >= 0 ? 'text-trade-buy' : 'text-trade-sell'}`}>
-            {domesticNet >= 0 ? '+' : ''}{formatIDR(domesticNet, useCompact)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-sans font-medium text-slash-mist mb-1.5">Porsi 3 &amp; 5 besar pembeli</div>
-          <div className="font-mono text-xl font-medium text-slash-paper tabular-nums">
-            {cr3BuyersPercent}% <span className="text-xs text-slash-mist font-normal">/ {cr5BuyersPercent}%</span>
-          </div>
-          <details className="mt-2 text-xs text-slash-mist font-sans">
-            <summary className="cursor-pointer hover:text-slash-paper text-slash-copper min-h-[32px] inline-flex items-center font-medium">Apa artinya?</summary>
-            <p className="mt-1.5 text-xs text-slash-bone leading-relaxed max-w-[65ch] bg-slash-carbon/80 p-2.5 rounded border border-slash-graphite">{COPY.cr_explain}</p>
-          </details>
-        </div>
+          {useCompact ? 'Tampilkan angka lengkap' : 'Tampilkan angka ringkas'}
+        </button>
       </div>
 
       {viewMode === 'split' && (
@@ -360,79 +384,25 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
       {viewMode === 'buyers' && renderBrokerTable('buyers', topBuyers, maxNetBuyer)}
       {viewMode === 'sellers' && renderBrokerTable('sellers', topSellers, maxNetSeller)}
 
-      {viewMode === 'matrix' && (
-        <div className="border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-5">
-          <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">Konsentrasi</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <span className="text-xs text-slash-fog font-sans">{COPY.buyers_title}</span>
-              <div className="space-y-2.5 text-xs font-mono-numbers">
-                <div>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-slash-fog">3 besar / daftar</span>
-                    <span className="text-slash-paper">{cr3BuyersPercent}%</span>
-                  </div>
-                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
-                    <div className="bg-trade-buy h-full rounded-xs" style={{ width: `${cr3BuyersPercent}%` }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-slash-fog">5 besar / daftar</span>
-                    <span className="text-slash-paper">{cr5BuyersPercent}%</span>
-                  </div>
-                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
-                    <div className="bg-trade-buy/70 h-full rounded-xs" style={{ width: `${cr5BuyersPercent}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <span className="text-xs text-slash-fog font-sans">{COPY.sellers_title}</span>
-              <div className="space-y-2.5 text-xs font-mono-numbers">
-                <div>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-slash-fog">3 besar / daftar</span>
-                    <span className="text-slash-paper">{cr3SellersPercent}%</span>
-                  </div>
-                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
-                    <div className="bg-trade-sell h-full rounded-xs" style={{ width: `${cr3SellersPercent}%` }} />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-slash-fog">5 besar / daftar</span>
-                    <span className="text-slash-paper">{cr5SellersPercent}%</span>
-                  </div>
-                  <div className="w-full bg-slash-carbon h-1.5 rounded-xs overflow-hidden">
-                    <div className="bg-trade-sell/70 h-full rounded-xs" style={{ width: `${cr5SellersPercent}%` }} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Broker detail modal */}
-      {activeHoverBroker && (
+      {modalMounted && activeHoverBroker && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={`Profil sekuritas ${activeHoverBroker.code}`}
           tabIndex={-1}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 overlay-dim"
+          data-open={modalOpen ? 'true' : 'false'}
           onClick={() => setActiveHoverBroker(null)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setActiveHoverBroker(null);
-          }}
         >
+          {/* Escape and the Tab trap are handled by the window listener above;
+              stopping keydown propagation here prevented both from firing. */}
           <div
             ref={modalRef}
             role="document"
             className="modal-panel w-full max-w-md bg-slash-onyx border border-slash-graphite rounded-lg p-5 sm:p-6 space-y-4"
+            data-open={modalOpen ? 'true' : 'false'}
             onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -450,9 +420,9 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                 type="button"
                 onClick={() => setActiveHoverBroker(null)}
                 aria-label="Tutup profil sekuritas"
-                className="pressable text-slash-mist hover:text-slash-paper font-sans text-xs px-3 py-2 min-h-[44px] min-w-[44px] rounded-md cursor-pointer inline-flex items-center justify-center"
+                className="pressable text-slash-mist hover:text-slash-paper rounded-md cursor-pointer inline-flex items-center justify-center w-11 h-11 -mr-2 -mt-1 shrink-0 transition-colors duration-150"
               >
-                {COPY.cta_close}
+                <X size={16} strokeWidth={2} aria-hidden="true" />
               </button>
             </div>
 

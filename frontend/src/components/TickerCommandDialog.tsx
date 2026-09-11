@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, X } from 'lucide-react';
 import { IDX_TICKERS, IDXTicker } from '@/constants/idxTickers';
 import { COPY } from '@/constants/copy';
 import { parseTicker, tickerErrorCopy } from '@/lib/ticker';
+import { useOverlayTransition } from '@/lib/useOverlayTransition';
 
 interface TickerCommandDialogProps {
   isOpen: boolean;
@@ -38,6 +40,7 @@ export const TickerCommandDialog: React.FC<TickerCommandDialogProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
+  const { mounted, open } = useOverlayTransition(isOpen);
 
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen);
@@ -147,7 +150,7 @@ export const TickerCommandDialog: React.FC<TickerCommandDialogProps> = ({
     setSelectedIndex(0);
   }
 
-  if (!isOpen) return null;
+  if (!mounted) return null;
 
   const parsedQuery = parseTicker(query);
   const activeDescendantId = filteredTickers[selectedIndex]
@@ -161,20 +164,22 @@ export const TickerCommandDialog: React.FC<TickerCommandDialogProps> = ({
       aria-label="Cari kode efek"
       tabIndex={-1}
       className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 overlay-dim"
+      data-open={open ? 'true' : 'false'}
       onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
     >
+      {/* No onKeyDown here or on the panel: keyboard handling lives in the
+          window listener above. Stopping propagation on the panel prevented
+          the native event from ever reaching it, which broke Escape and the
+          arrow-key navigation. */}
       <div
         ref={panelRef}
         role="document"
-        className="w-full max-w-2xl bg-slash-onyx border border-slash-slate rounded-lg overflow-hidden flex flex-col max-h-[80vh]"
+        className="command-panel w-full max-w-2xl bg-slash-onyx border border-slash-slate rounded-lg overflow-hidden flex flex-col max-h-[80vh]"
+        data-open={open ? 'true' : 'false'}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-slash-graphite px-5 py-3.5 flex items-center bg-slash-carbon/60 gap-3">
-          <span className="text-xs font-sans text-slash-mist font-medium shrink-0 select-none">Kode</span>
+        <div className="border-b border-slash-graphite px-4 sm:px-5 py-3.5 flex items-center bg-slash-carbon/60 gap-3">
+          <Search size={15} strokeWidth={2} className="text-slash-steel shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -189,22 +194,22 @@ export const TickerCommandDialog: React.FC<TickerCommandDialogProps> = ({
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Cari berdasarkan kode efek saham IDX..."
+            placeholder="Cari kode atau nama emiten"
             autoComplete="off"
             spellCheck={false}
-            className="w-full bg-transparent text-slash-paper placeholder-slash-steel text-sm font-sans focus:outline-none"
+            className="w-full min-h-[32px] bg-transparent text-slash-paper placeholder-slash-steel text-sm font-sans focus:outline-none"
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery('')}
               aria-label="Kosongkan pencarian"
-              className="pressable text-slash-mist hover:text-slash-paper text-sm font-sans min-w-[28px] min-h-[28px] inline-flex items-center justify-center rounded-xs cursor-pointer"
+              className="pressable text-slash-mist hover:text-slash-paper w-8 h-8 inline-flex items-center justify-center rounded-md cursor-pointer shrink-0 transition-colors duration-150"
             >
-              <span aria-hidden="true">×</span>
+              <X size={14} strokeWidth={2} aria-hidden="true" />
             </button>
           ) : (
-            <kbd className="hidden sm:inline-block font-mono text-xs text-slash-fog border border-slash-slate px-1.5 py-0.5 rounded-xs select-none">
+            <kbd className="hidden sm:inline-block font-mono text-[11px] text-slash-mist border border-slash-slate px-1.5 py-0.5 rounded-xs select-none shrink-0">
               Esc
             </kbd>
           )}
@@ -233,7 +238,9 @@ export const TickerCommandDialog: React.FC<TickerCommandDialogProps> = ({
 
         <div
           ref={listRef}
+          id="cmd-listbox"
           role="listbox"
+          aria-label="Hasil pencarian emiten"
           className="overflow-y-auto flex-1 min-h-[220px] divide-y divide-slash-graphite/40"
         >
           {filteredTickers.length === 0 ? (
@@ -267,31 +274,37 @@ export const TickerCommandDialog: React.FC<TickerCommandDialogProps> = ({
               const isCurrent = currentTicker === item.code;
 
               return (
-                <button
+                <div
                   key={item.code}
-                  type="button"
+                  id={`cmd-item-${item.code}`}
                   role="option"
                   aria-selected={isSelected}
-                  aria-label={`${item.code} - ${item.name}, Sektor ${item.sector}`}
+                  aria-label={`${item.code}, ${item.name}, sektor ${item.sector}`}
                   data-cmd-item
                   onClick={() => {
                     onSelectTicker(item.code);
                     onClose();
                   }}
-                  onFocus={() => setSelectedIndex(idx)}
-                  className={`dialog-row w-full text-left px-6 py-3 cursor-pointer flex items-center justify-between gap-3 ${
-                    isSelected ? 'bg-slash-carbon text-slash-paper' : 'hover:bg-slash-carbon/30 text-slash-mist'
+                  onMouseMove={() => setSelectedIndex(idx)}
+                  className={`w-full text-left px-4 sm:px-6 py-3 cursor-pointer flex items-center justify-between gap-3 transition-colors duration-100 ${
+                    isSelected ? 'bg-slash-carbon' : 'text-slash-mist'
                   }`}
                 >
                   <div className="flex items-baseline gap-3 min-w-0">
-                    <span className="font-mono font-semibold text-xs text-slash-copper bg-slash-carbon border border-slash-graphite px-1.5 py-0.5 rounded">
+                    <span className="font-mono font-semibold text-xs text-slash-copper bg-slash-carbon border border-slash-graphite px-1.5 py-0.5 rounded shrink-0">
                       {item.code}
                     </span>
-                    {isCurrent && <span className="text-[11px] font-mono text-slash-copper uppercase">Aktif</span>}
+                    {isCurrent && (
+                      <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-slash-copper shrink-0">
+                        Aktif
+                      </span>
+                    )}
                     <span className="text-sm font-sans truncate text-slash-bone">{item.name}</span>
                   </div>
-                  <span className="text-xs font-sans text-slash-fog shrink-0">{item.sector}</span>
-                </button>
+                  <span className="text-xs font-sans text-slash-fog shrink-0 hidden sm:inline">
+                    {item.sector}
+                  </span>
+                </div>
               );
             })
           )}

@@ -92,18 +92,19 @@ export const MarketStatusBar: React.FC = () => {
     <p
       aria-label={`Status pasar: ${marketStatus.label}, ${marketStatus.session}`}
       aria-live="off"
-      className="flex items-center gap-2 min-w-0 text-[11px] font-sans text-slash-fog"
+      className="flex items-center gap-2 min-w-0 text-[11px] font-sans m-0"
     >
-      <span className={marketStatus.isOpen ? 'text-trade-buy font-medium' : 'text-slash-mist font-medium'}>
-        {marketStatus.label}
-      </span>
-      <span className="font-mono-numbers text-slash-mist truncate hidden sm:inline">{marketStatus.session}</span>
-      <span className="text-slash-graphite hidden sm:inline" aria-hidden="true">·</span>
+      {/* Open state is the only one that earns colour; the dot carries it so
+          the label keeps full contrast either way. */}
       <span
-        className="text-slash-mist shrink-0 font-mono-numbers hidden sm:inline"
-        title="Penyelesaian transaksi 2 hari bursa"
-      >
-        T+2
+        aria-hidden="true"
+        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+          marketStatus.isOpen ? 'bg-status-success' : 'bg-slash-steel'
+        }`}
+      />
+      <span className="text-slash-bone font-medium shrink-0">{marketStatus.label}</span>
+      <span className="font-mono-numbers text-slash-fog truncate hidden sm:inline">
+        {marketStatus.session}
       </span>
     </p>
   );

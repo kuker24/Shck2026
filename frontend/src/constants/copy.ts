@@ -1,23 +1,19 @@
 export const COPY = {
-  app_name: 'Aegis-IDX',
-  disclaimer_short:
-    'Bukan saran investasi. Data transaksi broker dan free float untuk analisis faktual.',
   disclaimer_long:
     'Aegis-IDX bukan penasihat investasi. Tidak ada rekomendasi beli atau jual. Keputusan transaksi menjadi tanggung jawab Anda.',
 
   ticker_placeholder: 'BBCA',
-  ticker_label: 'Kode',
   cta_investigate: 'Periksa',
   cta_retry: 'Mulai ulang',
   cta_copy: 'Salin',
   cta_copied: 'Tersalin',
-  cta_close: 'Tutup',
   cta_try_example: 'Coba contoh: BBCA',
-  cta_view_all: 'Daftar emiten',
+  cta_view_all: 'Cari emiten',
+  audit_title: 'Jejak pemeriksaan',
   cta_expand: 'Tampilkan semua',
   cta_collapse: 'Ringkas',
   loading: 'Memproses…',
-  search_hint: 'Kode 2–5 huruf, contoh BBCA',
+  search_hint: 'Kode efek 2–5 karakter, contoh BBCA.',
   search_error_chars: 'Gunakan huruf dan angka saja, contoh BBCA',
   search_error_length: 'Kode efek 2–5 karakter, contoh BBCA',
 
@@ -25,6 +21,13 @@ export const COPY = {
   step_executor_broker: 'Mengambil ringkasan transaksi broker',
   step_executor_ff: 'Mengambil data kepemilikan publik',
   step_critic: 'Memeriksa netralitas data dan penafian',
+
+  role_planner: 'Perencana',
+  role_executor: 'Eksekutor',
+  role_critic: 'Peninjau',
+  orchestration_title: 'Tahapan pemeriksaan',
+  orchestration_hint:
+    'Perencana menyusun permintaan, Eksekutor mengambil data, Peninjau memeriksa hasilnya. Setiap tahap tercatat dan bisa ditelusuri.',
 
   buyers_title: 'Pembeli bersih terbesar',
   sellers_title: 'Penjual bersih terbesar',
@@ -37,15 +40,15 @@ export const COPY = {
   empty_title: 'Tidak ada data transaksi',
   empty_body: 'Tidak ada catatan broker untuk kode ini, atau kodenya tidak ada di daftar.',
   empty_suggest: 'Coba BBCA, atau kode lain.',
-  idle_hint: 'Ketik kode efek, contoh BBCA.',
   toast_live_fail: 'Koneksi langsung gagal. Menampilkan data simulasi.',
   toast_cache_miss: 'Data tersimpan tidak ada. Menampilkan simulasi.',
   toast_copied: 'Ringkasan disalin',
   toast_copy_fail: 'Gagal menyalin. Coba lagi.',
-  broker_section_hint: 'Nilai = total beli dikurangi total jual per sekuritas.',
-  cr_explain: 'Porsi 3 dan 5 sekuritas terbesar di daftar ini, bukan seluruh pasar.',
-  concentration_high: 'Terpusat',
-  concentration_low: 'Menyebar',
+  broker_section_hint: 'Net = total beli dikurangi total jual per sekuritas.',
+  cr_label: 'Porsi 3 sekuritas teratas',
+  cr_explain:
+    'Porsi 3 sekuritas terbesar dibanding 5 sekuritas yang tampil di daftar ini, bukan dibanding seluruh pasar.',
+  coverage_note: 'Dihitung dari 5 sekuritas teratas yang dikembalikan API, bukan seluruh pasar.',
   foreign_label: 'Asing',
   domestic_label: 'Domestik',
   net_label: 'Selisih bersih',

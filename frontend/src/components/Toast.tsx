@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { COPY } from '@/constants/copy';
+import React, { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 
 interface ToastProps {
   message: string;
@@ -10,16 +10,30 @@ interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ message, onClose, duration = 4000 }) => {
-  const [paused, setPaused] = React.useState(false);
-  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [open, setOpen] = useState(false);
 
+  // Enter on the next frame so the transition has a starting point.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setOpen(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Animate out, then unmount. Timer pauses on hover and focus so a message
+  // cannot disappear while it is being read or reached for.
   useEffect(() => {
     if (duration <= 0 || paused) return;
-    timerRef.current = setTimeout(onClose, duration);
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    const dismiss = setTimeout(() => {
+      setOpen(false);
+      setTimeout(onClose, 160);
+    }, duration);
+    return () => clearTimeout(dismiss);
   }, [duration, onClose, paused, message]);
+
+  const handleClose = () => {
+    setOpen(false);
+    setTimeout(onClose, 160);
+  };
 
   return (
     <div
@@ -29,16 +43,17 @@ export const Toast: React.FC<ToastProps> = ({ message, onClose, duration = 4000 
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
-      className="toast-panel fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slash-carbon border border-slash-graphite text-slash-paper pl-4 pr-2 py-2 rounded-lg text-xs max-w-[calc(100vw-2rem)] sm:max-w-sm shadow-lg shadow-black/20"
+      data-open={open ? 'true' : 'false'}
+      className="toast-panel fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slash-carbon border border-slash-slate text-slash-paper pl-4 pr-1.5 py-1.5 rounded-lg max-w-[calc(100vw-2rem)] sm:max-w-md shadow-lg shadow-black/40"
     >
-      <span className="font-sans text-sm text-slash-bone">{message}</span>
+      <span className="font-sans text-[13px] text-slash-bone leading-snug py-1.5">{message}</span>
       <button
         type="button"
-        onClick={onClose}
-        className="pressable text-[11px] font-sans text-slash-mist hover:text-slash-paper px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center border-l border-slash-graphite cursor-pointer focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:outline-none shrink-0"
-        aria-label={`${COPY.cta_close} notifikasi`}
+        onClick={handleClose}
+        className="pressable text-slash-mist hover:text-slash-paper w-9 h-9 inline-flex items-center justify-center rounded-md cursor-pointer focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:outline-none shrink-0 transition-colors duration-150"
+        aria-label="Tutup notifikasi"
       >
-        {COPY.cta_close}
+        <X size={15} strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
   );

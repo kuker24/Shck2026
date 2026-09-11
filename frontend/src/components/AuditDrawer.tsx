@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { X, Check } from 'lucide-react';
 import { InvestigateResponse } from '@/types/investigate';
 import { COPY } from '@/constants/copy';
 
@@ -18,7 +19,8 @@ const STATUS_CLASS = {
   running: 'text-slash-copper',
   error: 'text-status-error',
   skipped: 'text-slash-steel',
-  pending: 'text-slash-steel/70',
+  // Was steel/70 — about 3.1:1 on obsidian, below AA at this size.
+  pending: 'text-slash-steel',
 } satisfies Record<string, string>;
 
 export const AuditDrawer: React.FC<AuditDrawerProps> = ({
@@ -102,8 +104,10 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
     }`;
 
   return (
+    // overflow-hidden: the closed panel rests at translateX(100%), which would
+    // otherwise extend the document scroll width past the viewport.
     <div
-      className={`fixed inset-0 z-50 flex justify-end ${
+      className={`fixed inset-0 z-50 flex justify-end overflow-hidden ${
         isOpen ? 'pointer-events-auto' : 'pointer-events-none'
       }`}
       aria-hidden={!isOpen}
@@ -122,19 +126,21 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
         role="dialog"
         aria-modal={isOpen}
         inert={!isOpen}
-        aria-label="Jejak pemeriksaan"
+        aria-label={COPY.audit_title}
         className="drawer-panel relative w-full max-w-xl h-full bg-slash-onyx border-l border-slash-graphite flex flex-col overflow-hidden text-slash-bone"
         data-open={isOpen ? 'true' : 'false'}
       >
-        <div className="p-5 border-b border-slash-graphite flex items-center justify-between">
-          <h2 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">Jejak pemeriksaan</h2>
+        <div className="p-5 border-b border-slash-graphite flex items-center justify-between gap-3">
+          <h2 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em] m-0">
+            {COPY.audit_title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Tutup jejak pemeriksaan"
-            className="pressable text-xs font-sans px-3 py-1 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-md text-slash-mist hover:text-slash-paper cursor-pointer"
+            aria-label={`Tutup ${COPY.audit_title.toLowerCase()}`}
+            className="pressable inline-flex items-center justify-center rounded-md text-slash-mist hover:text-slash-paper cursor-pointer w-11 h-11 -mr-2 shrink-0 transition-colors duration-150"
           >
-            {COPY.cta_close}
+            <X size={16} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
 
@@ -164,20 +170,24 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
                 </div>
               </dl>
 
-              <div className="space-y-3 text-xs leading-relaxed max-w-[60ch]">
-                <div>
-                  <h3 className="font-medium text-slash-paper mb-0.5">Perencana</h3>
-                  <p className="text-slash-fog max-w-[60ch]">Alokasi kuota Sectors API.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-slash-paper mb-0.5">Eksekutor</h3>
-                  <p className="text-slash-fog max-w-[60ch]">Pengambilan broker summary &amp; free float.</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-slash-paper mb-0.5">Peninjau</h3>
-                  <p className="text-slash-fog max-w-[60ch]">Verifikasi integritas data &amp; penafian kepatuhan.</p>
-                </div>
-              </div>
+              {/* Role names match the labels on each step in the timeline. */}
+              <ol className="list-none p-0 m-0 space-y-3.5 text-xs leading-relaxed">
+                {[
+                  [COPY.role_planner, 'Menentukan data apa yang dibutuhkan dan berapa kuota API yang dipakai.'],
+                  [COPY.role_executor, 'Memanggil endpoint broker summary dan free float, lalu menyimpan hasilnya.'],
+                  [COPY.role_critic, 'Memeriksa kelengkapan data dan memastikan penafian non-rekomendasi terpasang.'],
+                ].map(([role, body], i) => (
+                  <li key={role} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+                    <span className="font-mono text-[11px] text-slash-steel tabular-nums pt-px">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div>
+                      <h3 className="font-medium text-slash-paper m-0">{role}</h3>
+                      <p className="text-slash-fog max-w-[58ch] mt-0.5 mb-0">{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
           )}
 
@@ -211,6 +221,9 @@ export const AuditDrawer: React.FC<AuditDrawerProps> = ({
                   disabled={!result}
                   className="pressable px-3 py-1 min-h-[44px] sm:min-h-[32px] rounded-md border border-slash-graphite text-slash-paper font-sans text-xs cursor-pointer hover:border-slash-slate disabled:opacity-40 transition-colors duration-150"
                 >
+                  {copied && (
+                    <Check size={12} strokeWidth={2.5} className="text-status-success mr-1.5 inline" aria-hidden="true" />
+                  )}
                   <span className="copy-label" data-swapping={copied}>
                     {copied ? COPY.cta_copied : 'Salin JSON'}
                   </span>

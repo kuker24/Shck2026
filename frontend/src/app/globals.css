@@ -22,15 +22,16 @@
   --color-slash-copper: #cc9166;
   --color-slash-gilded: #ae9357;
 
-  /* Semantic: trade (slop-free gilded bullion palette) */
-  --color-trade-buy: color-mix(in srgb, #e5c07b 50%, #f0f1f5);
+  /* Semantic: trade. One gold, one rose — these two mean money only.
+     Interactive accent lives on copper so hue never carries two meanings. */
+  --color-trade-buy: #e0b055;
   --color-trade-buy-dim: #262013;
   --color-trade-sell: #f43f5e;
   --color-trade-sell-dim: #4c0519;
 
   /* Semantic: status (non-trade contexts) */
-  --color-status-success: #10b981;
-  --color-status-error: #f43f5e;
+  --color-status-success: #34d399;
+  --color-status-error: #fb7185;
 
   /* Typography */
   --font-serif: var(--font-serif);
@@ -47,58 +48,37 @@
   --radius-lg: 12px;
 }
 
-/* ── Page typography & header accent (Variant 3) ───────── */
+/* ── Base ──────────────────────────────────────────────────── */
+/* Everything here is layered so per-element utilities always win.
+   Unlayered rules previously overrode Tailwind and flattened the
+   type scale to a single 15px paragraph size. */
 
-.page-root-v3 {
-  font-size: 16px;
-}
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
 
-.page-root-v3 p {
-  font-size: 15px;
-  line-height: 1.65;
-}
+  body {
+    background-color: var(--color-slash-obsidian);
+    color: var(--color-slash-bone);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    min-height: 100dvh;
+    text-rendering: optimizeLegibility;
+  }
 
-.page-root-v3 .text-slash-fog {
-  color: var(--color-slash-mist) !important;
-}
-
-.page-root-v3 header {
-  border-bottom-color: color-mix(in srgb, var(--color-slash-gilded) 30%, var(--color-slash-graphite));
-}
-
-.text-trade-buy {
-  color: color-mix(in srgb, #e5c07b 50%, #f0f1f5) !important;
-}
-
-.bg-trade-buy {
-  background-color: #d99b26 !important;
+  /* Visible keyboard focus everywhere (a11y floor) */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-slash-copper);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 .compliance-badge {
   border: 1px solid var(--color-slash-slate);
   background-color: var(--color-slash-carbon);
   color: var(--color-slash-bone);
-}
-
-/* ── Base ──────────────────────────────────────────────────── */
-
-html {
-  scrollbar-gutter: stable;
-}
-
-body {
-  background-color: var(--color-slash-obsidian);
-  color: var(--color-slash-bone);
-  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  min-height: 100dvh;
-  text-rendering: optimizeLegibility;
-}
-
-/* Visible keyboard focus everywhere (a11y floor) */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-slash-copper);
-  outline-offset: 2px;
-  border-radius: 4px;
 }
 
 /* ── Tabular numbers for data ─────────────────────────────── */
@@ -183,27 +163,62 @@ input, textarea {
   transition-duration: 180ms;
 }
 
+/* Modals stay centre-origin: they are not anchored to a trigger.
+   Exit runs faster than enter — the system responding, not deciding. */
 .modal-panel {
   opacity: 1;
   transform: scale(1);
-  transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 240ms var(--ease-emil-out), opacity 240ms var(--ease-emil-out);
+}
+
+.modal-panel[data-open='false'] {
+  opacity: 0;
+  transform: scale(0.97);
+  transition-duration: 160ms;
 }
 
 .toast-panel {
   opacity: 1;
   transform: translateY(0);
-  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 240ms var(--ease-emil-out), opacity 240ms var(--ease-emil-out);
+}
+
+.toast-panel[data-open='false'] {
+  opacity: 0;
+  transform: translateY(60%);
+  transition-duration: 160ms;
 }
 
 @starting-style {
   .modal-panel {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
 
   .toast-panel {
     opacity: 0;
-    transform: translateY(100%);
+    transform: translateY(60%);
+  }
+}
+
+/* Command dialog: enters from slightly above its resting place,
+   matching the downward reading direction of the list it opens. */
+.command-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: transform 240ms var(--ease-emil-out), opacity 240ms var(--ease-emil-out);
+}
+
+.command-panel[data-open='false'] {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transition-duration: 160ms;
+}
+
+@starting-style {
+  .command-panel {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
   }
 }
 
@@ -253,15 +268,17 @@ input, textarea {
   }
 }
 
-/* ── Running step pulse ───────────────────────────────────── */
+/* ── Running step indicator ───────────────────────────────────
+   The pulse lives on the marker, never on the label: text that
+   fades to 0.4 is unreadable at exactly the moment it matters. */
 
 @keyframes step-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
 }
 
-.step-running-bar {
-  animation: step-pulse 2s ease-in-out infinite;
+.step-pulse {
+  animation: step-pulse 1.6s ease-in-out infinite;
 }
 
 /* ── Skeleton shimmer (loading state) ─────────────────────── */
@@ -325,6 +342,7 @@ input, textarea {
   .overlay-dim,
   .drawer-panel,
   .modal-panel,
+  .command-panel,
   .toast-panel,
   .copy-label,
   .result-enter > *,
@@ -339,12 +357,17 @@ input, textarea {
     filter: none !important;
   }
 
+  /* Reduced motion means gentler, not absent: dismissal still needs to
+     read as dismissal, so opacity is kept where movement is removed. */
   .overlay-dim[data-open='false'],
-  .drawer-panel[data-open='false'] {
+  .drawer-panel[data-open='false'],
+  .modal-panel[data-open='false'],
+  .command-panel[data-open='false'],
+  .toast-panel[data-open='false'] {
     opacity: 0;
   }
 
-  .step-running-bar {
+  .step-pulse {
     animation: none !important;
   }
 }

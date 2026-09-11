@@ -56,10 +56,10 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({
                 aria-checked={active}
                 aria-label={`${getModeLabel(m)} — ${getModeHint(m)}`}
                 title={getModeHint(m)}
-                className={`pressable px-2 py-1 min-h-[44px] sm:min-h-[28px] flex items-center font-sans text-[11px] border-b-2 cursor-pointer transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none ${
+                className={`pressable px-2 min-h-[32px] flex items-center font-sans text-[11px] border-b-2 cursor-pointer transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-slash-copper focus-visible:outline-none ${
                   active
                     ? 'border-slash-copper text-slash-paper font-medium'
-                    : 'border-transparent text-slash-fog hover:text-slash-bone'
+                    : 'border-transparent text-slash-mist hover:text-slash-paper'
                 }`}
               >
                 {getModeLabel(m)}
@@ -82,10 +82,10 @@ export const ModeBadge: React.FC<ModeBadgeProps> = ({
 
       {creditEstimate !== undefined && creditEstimate !== null && (
         <div
-          className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 min-h-[32px] rounded-md bg-slash-carbon border border-slash-graphite text-[11px] text-slash-mist font-mono"
-          title="Perkiraan kuota API yang dipakai untuk pemeriksaan ini"
+          className="hidden md:inline-flex items-center px-2 min-h-[26px] rounded bg-slash-carbon border border-slash-graphite text-[11px] text-slash-mist font-mono-numbers"
+          title="Perkiraan kuota Sectors API yang dipakai untuk pemeriksaan ini"
         >
-          ~{creditEstimate} kredit
+          {creditEstimate} kredit
         </div>
       )}
     </div>

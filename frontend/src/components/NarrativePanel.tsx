@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { COPY } from '@/constants/copy';
 
 interface NarrativePanelProps {
@@ -40,14 +41,19 @@ export const NarrativePanel: React.FC<NarrativePanelProps> = ({
   return (
     <section aria-label={COPY.narrative_title} className={`border border-slash-graphite rounded-lg p-5 sm:p-6 ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em]">{COPY.narrative_title}</h3>
+        <h3 className="text-[13px] font-sans font-medium text-slash-paper tracking-[-0.01em] m-0">{COPY.narrative_title}</h3>
         {narrative && (
           <button
             type="button"
             onClick={handleCopy}
             aria-label={copied ? 'Ringkasan tersalin' : `Salin ringkasan ${ticker}`}
-            className="pressable text-[11px] font-sans px-3 py-1 min-h-[44px] sm:min-h-[32px] rounded-md border border-slash-graphite text-slash-mist hover:text-slash-paper hover:border-slash-slate focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none cursor-pointer transition-colors duration-150"
+            className="pressable text-[11px] font-sans px-2.5 min-h-[32px] rounded-md border border-slash-graphite text-slash-mist hover:text-slash-paper hover:border-slash-slate focus-visible:ring-2 focus-visible:ring-slash-copper focus-visible:ring-offset-2 focus-visible:ring-offset-slash-obsidian focus-visible:outline-none cursor-pointer transition-colors duration-150 inline-flex items-center gap-1.5 shrink-0"
           >
+            {copied ? (
+              <Check size={12} strokeWidth={2.5} className="text-status-success" aria-hidden="true" />
+            ) : (
+              <Copy size={12} strokeWidth={2} aria-hidden="true" />
+            )}
             <span className="copy-label" data-swapping={copied}>
               {copyFailed ? COPY.toast_copy_fail : copied ? COPY.cta_copied : COPY.cta_copy}
             </span>
@@ -57,7 +63,7 @@ export const NarrativePanel: React.FC<NarrativePanelProps> = ({
 
       {narrative ? (
         <div>
-          <p className={`text-base text-slash-bone font-serif leading-relaxed whitespace-pre-line max-w-[65ch] ${!expanded && isLong ? 'line-clamp-6' : ''}`}>
+          <p className={`text-[15px] text-slash-bone font-serif leading-[1.7] whitespace-pre-line max-w-[68ch] m-0 ${!expanded && isLong ? 'line-clamp-6' : ''}`}>
             {narrative}
           </p>
           {isLong && (
@@ -65,14 +71,14 @@ export const NarrativePanel: React.FC<NarrativePanelProps> = ({
               type="button"
               onClick={() => setExpanded(!expanded)}
               aria-expanded={expanded}
-              className="pressable mt-3 text-[11px] font-sans text-slash-copper hover:text-slash-paper min-h-[44px] sm:min-h-[32px] cursor-pointer"
+              className="pressable mt-3 text-[11px] font-sans text-slash-copper hover:text-slash-paper min-h-[32px] cursor-pointer inline-flex items-center transition-colors duration-150"
             >
               {expanded ? COPY.cta_collapse : COPY.cta_expand}
             </button>
           )}
         </div>
       ) : (
-        <p className="text-sm text-slash-mist font-serif leading-relaxed">{COPY.narrative_empty}</p>
+        <p className="text-[13px] text-slash-fog font-sans leading-relaxed m-0">{COPY.narrative_empty}</p>
       )}
     </section>
   );

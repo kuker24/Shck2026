@@ -80,7 +80,7 @@ export const StepsTimeline: React.FC<StepsTimelineProps> = ({ steps, className =
 
   return (
     <section aria-labelledby="orchestration-heading" className={className}>
-      <div className="flex items-baseline justify-between gap-4 mb-1">
+      <div className="flex items-baseline justify-between gap-4 mb-4">
         <h2
           id="orchestration-heading"
           className="text-sm font-sans font-semibold text-slash-paper tracking-[-0.01em]"
@@ -91,10 +91,6 @@ export const StepsTimeline: React.FC<StepsTimelineProps> = ({ steps, className =
           <span className="text-slash-mist">{completedCount}</span>/{steps.length}
         </p>
       </div>
-
-      <p className="text-[13px] text-slash-fog font-sans leading-relaxed m-0 mb-5 max-w-[68ch]">
-        {COPY.orchestration_hint}
-      </p>
 
       {/* Screen readers get one short status line instead of the whole
           re-announced list on every step transition. */}

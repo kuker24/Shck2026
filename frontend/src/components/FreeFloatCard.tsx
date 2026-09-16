@@ -18,6 +18,8 @@ export const FreeFloatCard: React.FC<FreeFloatCardProps> = ({ data, className = 
   const percent = hasData ? (data.percent as number) : 0;
   const animatedPercent = useCountUp(hasData ? percent : 0);
   const isCompliant = hasData && percent >= 7.5;
+  const isRedundantNote =
+    Boolean(data.note && /memenuhi ketentuan|aturan min|di bawah aturan/i.test(data.note));
 
   return (
     <section aria-label={COPY.free_float_title} className={`border border-slash-graphite rounded-lg p-5 sm:p-6 flex flex-col ${className}`}>
@@ -87,7 +89,7 @@ export const FreeFloatCard: React.FC<FreeFloatCardProps> = ({ data, className = 
             </div>
           )}
 
-          {data.note && (
+          {!isRedundantNote && data.note && (
             <p className="text-xs text-slash-fog font-sans leading-relaxed mt-auto mb-0">{data.note}</p>
           )}
     </section>

@@ -197,12 +197,15 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
                         <td className="py-3 px-2 sm:px-3.5 min-w-0 align-middle">
                           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                             <span
-                              className={`font-sans text-[10px] sm:text-[11px] shrink-0 ${
-                                isForeign ? 'text-slash-copper' : 'text-slash-fog'
+                              className={`font-mono text-[10px] font-semibold px-1 py-0.5 rounded-xs shrink-0 ${
+                                isForeign
+                                  ? 'text-slash-copper bg-slash-copper/10 border border-slash-copper/30'
+                                  : 'text-slash-steel bg-slash-carbon border border-slash-graphite'
                               }`}
-                              title={isForeign ? 'Sekuritas asing' : 'Sekuritas domestik'}
+                              title={isForeign ? 'Sekuritas asing (Foreign)' : 'Sekuritas domestik (Domestic)'}
+                              aria-label={isForeign ? 'Asing' : 'Domestik'}
                             >
-                              {isForeign ? 'Asing' : 'Domestik'}
+                              {isForeign ? 'F' : 'D'}
                             </span>
                             <button
                               type="button"
@@ -306,9 +309,6 @@ export const BrokerAnalysisView: React.FC<BrokerAnalysisViewProps> = ({
         >
           Aliran broker
         </h2>
-        <p className="text-[13px] text-slash-fog font-sans leading-relaxed mt-1 mb-0 max-w-[68ch]">
-          {COPY.coverage_note}
-        </p>
       </div>
 
       {/* Summary figures. Gold means money in, rose means money out —

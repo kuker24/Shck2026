@@ -156,13 +156,13 @@ export const TickerSearch: React.FC<TickerSearchProps> = ({
       </form>
 
       {errorMsg ? (
-        <p id="ticker-error" className="text-[13px] text-status-error font-sans leading-relaxed" role="alert">
+        <p id="ticker-error" className="text-[13px] text-status-error font-sans leading-relaxed m-0" role="alert">
           {errorMsg}
         </p>
       ) : (
-        <p id="ticker-hint" className="text-[13px] text-slash-fog font-sans leading-relaxed">
+        <span id="ticker-hint" className="sr-only">
           {COPY.search_hint}
-        </p>
+        </span>
       )}
 
       {/* One row of entry points: quick codes for the common case, full search

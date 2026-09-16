@@ -26,8 +26,6 @@ export const COPY = {
   role_executor: 'Eksekutor',
   role_critic: 'Peninjau',
   orchestration_title: 'Tahapan pemeriksaan',
-  orchestration_hint:
-    'Perencana menyusun permintaan, Eksekutor mengambil data, Peninjau memeriksa hasilnya. Setiap tahap tercatat dan bisa ditelusuri.',
 
   buyers_title: 'Pembeli bersih terbesar',
   sellers_title: 'Penjual bersih terbesar',
@@ -48,7 +46,6 @@ export const COPY = {
   cr_label: 'Porsi 3 sekuritas teratas',
   cr_explain:
     'Porsi 3 sekuritas terbesar dibanding 5 sekuritas yang tampil di daftar ini, bukan dibanding seluruh pasar.',
-  coverage_note: 'Dihitung dari 5 sekuritas teratas yang dikembalikan API, bukan seluruh pasar.',
   foreign_label: 'Asing',
   domestic_label: 'Domestik',
   net_label: 'Selisih bersih',

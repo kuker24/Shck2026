@@ -25,3 +25,9 @@ yarn-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+demos/
+# Environment files (keep committed templates)
+.env*
+!.env.example
+**/.env*
+!**/.env.example
